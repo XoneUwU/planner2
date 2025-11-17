@@ -2,8 +2,9 @@
   "name": "planner1-2",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "boda/server.js",
   "scripts": {
+    "start": "node boda/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
