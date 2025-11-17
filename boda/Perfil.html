@@ -125,8 +125,29 @@
         </div>
 
 <script>
+    // 1. ELIMINAR IMAGEN AHORA ELIMINA UNA RESERVA
+    async function eliminarReserva(idReserva) {
+        if(!confirm("¿Estás seguro de eliminar esta reserva?")) return;
+        try {
+            // Llamamos a la NUEVA ruta /eliminar-reserva (que crearemos en el backend)
+            const res = await fetch('http://localhost:3000/eliminar-reserva', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_reserva: idReserva }) // Enviamos el ID de la Reserva
+            });
+            if(res.ok) {
+                location.reload(); // Recarga la página para refrescar la lista
+            } else {
+                alert("Error al eliminar la reserva. Intente de nuevo.");
+            }
+        } catch(e) {
+            console.error(e);
+            alert("Error de conexión al servidor.");
+        }
+    }
+
+    // 2. CARGAR EL PERFIL COMPLETO
     window.addEventListener('DOMContentLoaded', async () => {
-        // 1. Recuperar el ID
         const idUsuario = localStorage.getItem('usuarioId');
 
         if(!idUsuario) {
@@ -134,17 +155,18 @@
             return;
         }
 
-        // 2. PEDIR AL BACKEND LOS DETALLES COMPLETOS DEL PERFIL
         try {
-            // Usamos la nueva ruta GET con el ID
             const response = await fetch(`http://localhost:3000/perfil-completo/${idUsuario}`);
             const data = await response.json();
 
             if(data.success) {
-                // A. Mostrar mis datos (recibidos del servidor)
+                // A. MOSTRAR DATOS DEL USUARIO Y LA CUENTA (¡CORREGIDO!)
                 document.getElementById('nombreUsuario').textContent = data.miPerfil.nombre;
-                document.getElementById('presupuestoUsuario').textContent = parseFloat(data.miPerfil.presupuesto).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
-                document.getElementById('codigoPareja').textContent = data.miPerfil.codigo || "---";
+                
+                // Estos campos ahora se leen del objeto 'cuenta'
+                document.getElementById('codigoPareja').textContent = data.cuenta.codigo || "---";
+                const presupuesto = parseFloat(data.cuenta.presupuesto).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
+                document.getElementById('presupuestoUsuario').textContent = presupuesto;
 
                 // B. Mostrar nombre de la pareja
                 const infoPareja = document.getElementById('infoPareja');
@@ -154,25 +176,28 @@
                     infoPareja.textContent = "Comparte tu código para unirte.";
                 }
 
-                // C. Renderizar imágenes
+                // C. Renderizar Ítems Guardados (¡MIGRADO A RESERVA!)
                 const contenedor = document.getElementById('galeriaGuardados');
                 contenedor.innerHTML = ''; 
+                const items = data.items; // Ahora el servidor envía 'items', no 'imagenes'
 
-                if(data.imagenes.length === 0) {
-                    contenedor.innerHTML = '<p style="text-align:center; width:100%;">No hay imágenes guardadas aún.</p>';
+                if(items.length === 0) {
+                    contenedor.innerHTML = '<p style="text-align:center; width:100%; color:#888;">No hay ítems guardados aún. Ve al inicio y haz "Seleccionar".</p>';
                 }
 
-                data.imagenes.forEach(img => {
+                items.forEach(item => {
                     const div = document.createElement('div');
                     div.className = 'gallery-item';
                     
+                    // Aquí usamos los datos reales del producto (nombre_item, url_imagen, tipo_opcion)
                     div.innerHTML = `
-                        <img src="${img.url_imagen}" alt="Imagen Guardada">
+                        <img src="${item.url_imagen}" alt="${item.nombre_item}">
                         <div class="gallery-info">
-                            <p>${img.descripcion || 'Sin descripción'}</p>
-                            <small>Guardado por: ${img.guardado_por}</small>
+                            <p>${item.nombre_item || 'Producto sin nombre'}</p>
+                            <small>${item.tipo_opcion} | Costo: ${parseFloat(item.monto_total).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' })}</small>
+                            <small style="color: ${item.estado_pago === 'Pendiente' ? '#e74c3c' : '#27ae60'}; display:block;">Estado: ${item.estado_pago}</small>
                         </div>
-                        <button class="delete-btn" onclick="eliminarImagen(${img.id_imagen})">X</button>
+                        <button class="delete-btn" onclick="eliminarReserva(${item.id_reserva})">X</button>
                     `;
                     contenedor.appendChild(div);
                 });
@@ -181,31 +206,12 @@
             }
 
         } catch (e) {
-            console.error(e);
-            alert("Error al cargar el perfil");
-            localStorage.clear();
+            console.error('Error al cargar perfil:', e);
+            alert("Error al cargar el perfil. Redirigiendo...");
+            localStorage.clear(); // Se borra la sesión si hay un error grave
             window.location.href = 'Login.html';
         }
     });
-
-    // --- ELIMINAR IMAGEN (SIN CAMBIOS) ---
-    async function eliminarImagen(idImagen) {
-        if(!confirm("¿Estás seguro de eliminar esta imagen?")) return;
-        try {
-            const res = await fetch('http://localhost:3000/eliminar-imagen', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_imagen: idImagen })
-            });
-            if(res.ok) {
-                location.reload(); 
-            } else {
-                alert("Error al eliminar");
-            }
-        } catch(e) {
-            console.error(e);
-        }
-    }
 </script>
 </body>
 </html>
