@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Tablero - Wedding Planner</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f0f2f5;
+        }
+
+        /* --- Barra Superior --- */
+        .top-bar {
+            background-color: #ffffff;
+            padding: 15px 30px;
+            border-bottom: 1px solid #ddd;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .user-info h3 { margin: 0; color: #333; }
+        .user-info p { margin: 0; color: #555; font-size: 14px; }
+
+        /* --- Menú Desplegable --- */
+        .menu-dropdown { position: relative; display: inline-block; }
+        .menu-btn {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 14px;
+        }
+        .dropdown-content a:hover { background-color: #ddd; }
+        .menu-dropdown:hover .dropdown-content { display: block; }
+        .menu-dropdown:hover .menu-btn { background-color: #2980b9; }
+        
+        /* --- Galería Estilo Pinterest --- */
+        .gallery-container {
+            column-count: 4;
+            column-gap: 15px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 20px auto;
+        }
+
+        .gallery-item {
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            animation: fadeIn 0.5s ease-in;
+            position: relative; /* Para posicionar el botón seleccionar */
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .gallery-item img { width: 100%; height: auto; display: block; }
+        
+        .gallery-item p {
+            margin: 0; padding: 10px; background-color: #fff;
+            text-align: center; font-weight: bold; color: #444; font-size: 0.9em;
+        }
+
+        /* --- Botón Seleccionar (NUEVO) --- */
+        .select-btn {
+            display: none; /* Oculto por defecto */
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .gallery-item:hover .select-btn { display: block; }
+        .select-btn:hover { background-color: #c0392b; }
+        
+        /* --- Responsivo --- */
+        @media (max-width: 1000px) { .gallery-container { column-count: 3; } }
+        @media (max-width: 768px) { .gallery-container { column-count: 2; } .top-bar { flex-direction: column; gap: 10px; } }
+        @media (max-width: 480px) { .gallery-container { column-count: 1; } }
+
+        /* --- Indicador de Carga --- */
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            font-weight: bold;
+            color: #555;
+            font-size: 1.1em;
+        }
+        .loading-indicator.show { display: block; }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar">
+        <div class="user-info">
+            <h3 id="userName">Cargando...</h3>
+            <p id="userBudget">Presupuesto: $...</p>
+        </div>
+        
+        <div class="menu-dropdown">
+            <button class="menu-btn">Menú ▼</button>
+            <div class="dropdown-content">
+                <a href="Perfil.html">Mi Perfil</a>
+                <a href="#" onclick="cerrarSesion()">Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="gallery-container" id="galleryContainer">
+        </main>
+
+    <div class="loading-indicator" id="loadingIndicator">
+        Cargando más ideas...
+    </div>
+
+<script>
+    // ... (Variables de scroll sin cambios) ...
+
+    // --- SCRIPT PARA CARGAR DATOS DEL USUARIO (ACTUALIZADO) ---
+    window.addEventListener('DOMContentLoaded', async () => {
+        // 1. Leer el ÚNICO dato guardado: el ID
+        const idUsuario = localStorage.getItem('usuarioId');
+
+        if (!idUsuario) {
+            // Si no hay ID, no hay sesión
+            window.location.href = 'Login.html';
+            return;
+        }
+
+        // 2. Pedir al backend la info del header
+        try {
+            const response = await fetch(`http://localhost:3000/header-info/${idUsuario}`);
+            const data = await response.json();
+
+            if (data.success) {
+                let presupuesto = parseFloat(data.usuario.presupuesto_estimado).toLocaleString('es-ES', { 
+                    style: 'currency', 
+                    currency: 'BOB'
+                });
+                document.getElementById('userName').textContent = data.usuario.nombre;
+                document.getElementById('userBudget').textContent = `Presupuesto: ${presupuesto}`;
+            } else {
+                throw new Error('Usuario no encontrado');
+            }
+        } catch (error) {
+            console.error(error);
+            // Si falla al buscar el ID, la sesión es inválida
+            localStorage.clear();
+            window.location.href = 'Login.html';
+            return;
+        }
+
+        // 3. Cargar el primer set de imágenes (sin cambios)
+        loadMoreImages();
+    });
+
+    // --- SCRIPT PARA CERRAR SESIÓN ---
+    function cerrarSesion() {
+        localStorage.clear(); // Borra solo el ID
+        window.location.href = 'Login.html';
+    }
+
+    // --- GUARDAR IMAGEN (SIN CAMBIOS) ---
+    async function guardarImagen(url, descripcion) {
+        const idUsuario = localStorage.getItem('usuarioId');
+        // ... (Tu código de guardar imagen que ya funciona está perfecto)
+        if(!idUsuario) {
+            alert("Debes iniciar sesión para guardar.");
+            return;
+        }
+        try {
+            const response = await fetch('http://localhost:3000/guardar-imagen', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    id_usuario: idUsuario, 
+                    url_imagen: url, 
+                    descripcion: descripcion 
+                })
+            });
+            const data = await response.json();
+            if(data.success) {
+                alert("¡Imagen guardada en tu perfil!");
+            } else {
+                alert("Error al guardar la imagen.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error de conexión.");
+        }
+    }
+
+    // ... (El resto del script de scroll infinito y crear item NO cambia) ...
+    let isLoading = false;
+    let imageCounter = 1;
+    const galleryContainer = document.getElementById('galleryContainer');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+
+    window.addEventListener('scroll', () => {
+        if (isLoading) return;
+        if (window.innerHeight + window.scrollY >= document.documentElement.offsetHeight - 100) {
+            loadMoreImages();
+        }
+    });
+
+    function loadMoreImages() {
+        isLoading = true;
+        loadingIndicator.classList.add('show');
+        setTimeout(() => {
+            for (let i = 0; i < 10; i++) {
+                const item = createImageItem();
+                galleryContainer.appendChild(item);
+            }
+            isLoading = false;
+            loadingIndicator.classList.remove('show');
+        }, 1000);
+    }
+
+    function createImageItem() {
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+
+        const randomHeight = Math.floor(Math.random() * 300) + 300;
+        const randomColor = Math.floor(Math.random()*16777215).toString(16);
+        const imageUrl = `https://placehold.co/400x${randomHeight}/${randomColor}/white?text=Imagen+${imageCounter}`;
+        const desc = `Idea de Boda #${imageCounter}`;
+
+        const img = document.createElement('img');
+        img.src = imageUrl;
+
+        const p = document.createElement('p');
+        p.textContent = desc;
+
+        const btn = document.createElement('button');
+        btn.className = 'select-btn';
+        btn.textContent = '❤ Seleccionar';
+        btn.onclick = () => guardarImagen(imageUrl, desc);
+
+        item.appendChild(img);
+        item.appendChild(p);
+        item.appendChild(btn);
+        
+        imageCounter++;
+        return item;
+    }
+</script>
+</body>
+</html>

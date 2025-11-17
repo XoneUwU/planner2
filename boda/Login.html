@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Ingeniería de Software 2</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f6fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-container {
+            background: #fff;
+            padding: 40px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        h2 { margin-bottom: 25px; color: #333; }
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            background-color: #1abc9c;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #16a085; }
+        .link { margin-top: 15px; display: block; font-size: 14px; }
+        .link a { color: #3498db; text-decoration: none; }
+        .link a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h2>Iniciar Sesión</h2>
+        
+        <form id="loginForm">
+            <input type="email" id="correo" placeholder="Correo electrónico" required>
+            <input type="password" id="contrasena" placeholder="Contraseña" required>
+            <button type="submit">Entrar</button>
+        </form>
+        
+        <div id="message" style="margin-top: 15px;"></div>
+        <div class="link">
+            ¿No tienes cuenta? <a href="register.html">Regístrate aquí</a>
+        </div>
+    </div>
+
+<!-- ============================================= -->
+<!-- === SCRIPT ACTUALIZADO === -->
+<!-- ============================================= -->
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const correo = document.getElementById('correo').value;
+        const contrasena = document.getElementById('contrasena').value;
+        const messageDiv = document.getElementById('message');
+
+        try {
+            const response = await fetch('http://localhost:3000/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ correo, contrasena }),
+            });
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                messageDiv.style.color = 'green';
+                messageDiv.textContent = "¡Bienvenido!";
+                
+                // --- CAMBIO CLAVE ---
+                // Borramos todo lo anterior y guardamos SOLO el ID
+                localStorage.clear();
+                localStorage.setItem('usuarioId', data.usuario.id);
+                // --- FIN DEL CAMBIO ---
+
+                setTimeout(() => { window.location.href = 'Principal.html'; }, 1000);
+            } else {
+                messageDiv.style.color = 'red';
+                messageDiv.textContent = data.message;
+            }
+        } catch (error) {
+            console.error(error);
+            messageDiv.style.color = 'red';
+            messageDiv.textContent = 'Error de conexión';
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - Wedding Planner</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+        }
+
+        /* --- HEADER DEL PERFIL --- */
+        .profile-header {
+            background: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .profile-left h2 { margin: 0; color: #333; }
+        .profile-left p { margin: 5px 0 0; color: #27ae60; font-weight: bold; }
+
+        .profile-center { text-align: center; }
+        .code-box {
+            background: #eee;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-family: monospace;
+            font-size: 1.2em;
+            letter-spacing: 2px;
+            color: #555;
+            margin-bottom: 5px;
+            display: inline-block;
+        }
+        .partner-info { font-size: 0.9em; color: #888; }
+        .partner-name { color: #e74c3c; font-weight: bold; }
+
+        .profile-right a {
+            text-decoration: none;
+            color: #333;
+            font-size: 24px;
+            padding: 10px;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+        .profile-right a:hover { background: #ddd; }
+
+        /* --- GALERÍA (Igual a Principal pero con borrar) --- */
+        .saved-gallery {
+            column-count: 4;
+            column-gap: 15px;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .gallery-item {
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            position: relative;
+            background: white;
+        }
+
+        .gallery-item img { width: 100%; display: block; }
+        
+        .gallery-info { padding: 10px; text-align: center; }
+        .gallery-info p { margin: 0; font-weight: bold; color: #444; }
+        .gallery-info small { color: #999; font-size: 0.8em; }
+
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none; /* Oculto */
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .gallery-item:hover .delete-btn { display: flex; }
+
+        @media (max-width: 768px) {
+            .profile-header { flex-direction: column; gap: 20px; text-align: center; }
+            .saved-gallery { column-count: 2; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="profile-header">
+        <div class="profile-left">
+            <h2 id="nombreUsuario">Cargando...</h2>
+            <p id="presupuestoUsuario">$0.00</p>
+        </div>
+
+        <div class="profile-center">
+            <div>CÓDIGO DE PAREJA</div>
+            <div class="code-box" id="codigoPareja">---</div>
+            <div class="partner-info" id="infoPareja">Esperando pareja...</div>
+        </div>
+
+        <div class="profile-right">
+            <a href="Principal.html" title="Volver al Inicio">🏠</a>
+        </div>
+    </header>
+
+    <h3 style="text-align: center; margin-top: 40px; color: #555;">TABLERO DE INSPIRACIÓN COMPARTIDO</h3>
+    
+    <div class="saved-gallery" id="galeriaGuardados">
+        </div>
+
+<script>
+    window.addEventListener('DOMContentLoaded', async () => {
+        // 1. Recuperar el ID
+        const idUsuario = localStorage.getItem('usuarioId');
+
+        if(!idUsuario) {
+            window.location.href = 'Login.html';
+            return;
+        }
+
+        // 2. PEDIR AL BACKEND LOS DETALLES COMPLETOS DEL PERFIL
+        try {
+            // Usamos la nueva ruta GET con el ID
+            const response = await fetch(`http://localhost:3000/perfil-completo/${idUsuario}`);
+            const data = await response.json();
+
+            if(data.success) {
+                // A. Mostrar mis datos (recibidos del servidor)
+                document.getElementById('nombreUsuario').textContent = data.miPerfil.nombre;
+                document.getElementById('presupuestoUsuario').textContent = parseFloat(data.miPerfil.presupuesto).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
+                document.getElementById('codigoPareja').textContent = data.miPerfil.codigo || "---";
+
+                // B. Mostrar nombre de la pareja
+                const infoPareja = document.getElementById('infoPareja');
+                if(data.pareja) {
+                    infoPareja.innerHTML = `Pareja con <span class="partner-name">${data.pareja}</span>`;
+                } else {
+                    infoPareja.textContent = "Comparte tu código para unirte.";
+                }
+
+                // C. Renderizar imágenes
+                const contenedor = document.getElementById('galeriaGuardados');
+                contenedor.innerHTML = ''; 
+
+                if(data.imagenes.length === 0) {
+                    contenedor.innerHTML = '<p style="text-align:center; width:100%;">No hay imágenes guardadas aún.</p>';
+                }
+
+                data.imagenes.forEach(img => {
+                    const div = document.createElement('div');
+                    div.className = 'gallery-item';
+                    
+                    div.innerHTML = `
+                        <img src="${img.url_imagen}" alt="Imagen Guardada">
+                        <div class="gallery-info">
+                            <p>${img.descripcion || 'Sin descripción'}</p>
+                            <small>Guardado por: ${img.guardado_por}</small>
+                        </div>
+                        <button class="delete-btn" onclick="eliminarImagen(${img.id_imagen})">X</button>
+                    `;
+                    contenedor.appendChild(div);
+                });
+            } else {
+                throw new Error(data.message);
+            }
+
+        } catch (e) {
+            console.error(e);
+            alert("Error al cargar el perfil");
+            localStorage.clear();
+            window.location.href = 'Login.html';
+        }
+    });
+
+    // --- ELIMINAR IMAGEN (SIN CAMBIOS) ---
+    async function eliminarImagen(idImagen) {
+        if(!confirm("¿Estás seguro de eliminar esta imagen?")) return;
+        try {
+            const res = await fetch('http://localhost:3000/eliminar-imagen', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_imagen: idImagen })
+            });
+            if(res.ok) {
+                location.reload(); 
+            } else {
+                alert("Error al eliminar");
+            }
+        } catch(e) {
+            console.error(e);
+        }
+    }
+</script>
+</body>
+</html>
