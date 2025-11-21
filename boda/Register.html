@@ -7,12 +7,47 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f6fa;
+            /* Quitamos el background de color sólido */
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            position: relative; /* Necesario para posicionar el fondo */
+            overflow: hidden;   /* Evita barras de scroll si el blur se sale un poco */
+        }
+
+        /* --- CAPA DEL FONDO (IMAGEN + BLUR) --- */
+        body::before {
+            content: "";
+            position: fixed; /* Se queda fijo en la pantalla */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Se pone DETRÁS del contenido */
+
+            /* --- TU IMAGEN --- */
+            /* Asegúrate de cambiar la ruta a tu imagen real */
+            background-image: url('img/fondo-boda.jpg'); 
+            background-size: cover;      /* Cubre toda la pantalla */
+            background-position: center; /* Centra la imagen */
+            background-repeat: no-repeat;
+
+            /* --- EL EFECTO BLUR --- */
+            filter: blur(1.5px); /* Cambia 8px para más o menos borroso */
+            
+            /* Truco Pro: Aumentamos un poco el tamaño para evitar bordes blancos difuminados */
+            transform: scale(1.1); 
+        }
+
+        /* Opcional: Una capa oscura encima para que el formulario resalte más */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.3); /* Oscurece la imagen un 30% */
+            z-index: -1;
         }
 
         .register-container {
@@ -91,43 +126,83 @@
         .color-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
+            gap: 20px;
             margin-top: 20px;
             margin-bottom: 20px;
         }
 
         .color-box {
-            height: 70px;
+            height: 100px; 
+            width: 100%; /* Ocupa todo el ancho de su columna */
             border-radius: 10px;
             cursor: pointer;
             position: relative;
             box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
+            transition: transform 0.2s, border 0.2s;
+            
+            /* 2. Recorte: Lo que sobresalga del cuadro, se esconde */
+            overflow: hidden; 
+            
+            /* Borde transparente para evitar saltos al seleccionar */
+            border: 3px solid transparent; 
+            box-sizing: border-box;
         }
 
-        .color-box:hover { transform: scale(1.05); }
-        .color-box.white { border: 1px solid #ddd; }
+        .color-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 1; /* Pone el elemento hover encima de los demás */
+        }
 
+        /* --- LA IMAGEN DENTRO DEL CUADRO --- */
+        .color-box img {
+            width: 100%;
+            height: 100%;
+            
+            /* 3. AJUSTE MAGICO: Cubre todo el cuadro sin estirarse/deformarse */
+            object-fit: cover; 
+            
+            display: block; /* Quita el espacio en blanco debajo de las imágenes */
+        }
+
+                /* --- ESTADO SELECCIONADO --- */
         .color-box.selected {
-            border: 4px solid #2ecc71;
+            border: 3px solid #2ecc71; /* Borde verde */
             transform: scale(0.95);
         }
 
         .check-icon {
             display: none;
             position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #2ecc71;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(46, 204, 113, 0.9);
             color: white;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 14px;
+            width: 30px;
+            height: 30px;
+            font-size: 18px;
             justify-content: center;
             align-items: center;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
         .color-box.selected .check-icon { display: flex; }
+                /* --- TEXTO DEL COLOR (OPCIONAL) --- */
+        .color-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.6); /* Fondo oscuro semitransparente */
+            color: white;
+            font-size: 12px;
+            text-align: center;
+            padding: 4px 0;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px black; /* Sombra para leer mejor */
+        }
 
         .link { margin-top: 20px; font-size: 14px; }
         .link a { color: #3498db; text-decoration: none; }
@@ -163,23 +238,58 @@
                 ¿Ya tienes cuenta? <a href="login.html">Inicia sesión</a>
             </div>
         </div>
-
         <div id="step2" class="step">
             <button type="button" class="btn-back" onclick="irAlPaso1()">&larr; Volver</button>
-            
             <h2>Escoge 2 Colores</h2>
             <p style="color: #777; font-size: 0.9em;">Para personalizar tu experiencia</p>
 
             <div class="color-grid">
-                <div class="color-box" style="background: #0000FF;" onclick="seleccionarColor(this, 'Azul')"><div class="check-icon">✔</div></div>
-                <div class="color-box" style="background: #008000;" onclick="seleccionarColor(this, 'Verde')"><div class="check-icon">✔</div></div>
-                <div class="color-box" style="background: #800080;" onclick="seleccionarColor(this, 'Morado')"><div class="check-icon">✔</div></div>
-                <div class="color-box" style="background: #FFD700;" onclick="seleccionarColor(this, 'Amarillo')"><div class="check-icon">✔</div></div>
-                <div class="color-box" style="background: #FF0000;" onclick="seleccionarColor(this, 'Rojo')"><div class="check-icon">✔</div></div>
-                <div class="color-box white" style="background: #FFFFFF;" onclick="seleccionarColor(this, 'Blanco')"><div class="check-icon">✔</div></div>
-                <div class="color-box" style="background: #000000;" onclick="seleccionarColor(this, 'Negro')"><div class="check-icon">✔</div></div>
-                <div class="color-box" style="background: #87CEEB;" onclick="seleccionarColor(this, 'Celeste')"><div class="check-icon">✔</div></div>
+                <div class="color-box" onclick="seleccionarColor(this, 'Rojo')">
+                    <img src="img/rojo.jpg" alt="Rojo"> <div class="check-icon">✔</div>
+                    <span class="color-name">Rojo</span> </div>
+
+                <div class="color-box" onclick="seleccionarColor(this, 'Blanco')">
+                    <img src="img/blanco.jpg" alt="Blanco">
+                    <div class="check-icon">✔</div>
+                <span class="color-name">Blanco</span>
             </div>
+
+            <div class="color-box" onclick="seleccionarColor(this, 'Verde')">
+                <img src="img/verde.jpg" alt="Verde">
+                <div class="check-icon">✔</div>
+                <span class="color-name">Verde</span>
+            </div>
+
+            <div class="color-box" onclick="seleccionarColor(this, 'Azul')">
+                <img src="img/azul.jpg" alt="Azul">
+                <div class="check-icon">✔</div>
+                <span class="color-name">Azul</span>
+            </div>
+
+            <div class="color-box" onclick="seleccionarColor(this, 'Naranja')">
+                <img src="img/naranja.jpg" alt="Naranja">
+                <div class="check-icon">✔</div>
+                <span class="color-name">Naranja</span>
+            </div>
+
+            <div class="color-box" onclick="seleccionarColor(this, 'Amarillo')">
+                <img src="img/amarillo.jpg" alt="Amarillo">
+                <div class="check-icon">✔</div>
+                <span class="color-name">Amarillo</span>
+            </div>
+
+            <div class="color-box" onclick="seleccionarColor(this, 'Cafe')">
+                <img src="img/cafe.jpg" alt="Café">
+                <div class="check-icon">✔</div>
+                <span class="color-name">Café</span>
+            </div>
+
+            <div class="color-box" onclick="seleccionarColor(this, 'Morado')">
+                <img src="img/morado.jpg" alt="Morado">
+                <div class="check-icon">✔</div>
+                <span class="color-name">Morado</span>
+            </div>
+        </div>
 
             <p id="contadorColores" style="font-size: 14px; color: #555;">Seleccionados: 0 / 2</p>
 

@@ -1,7 +1,20 @@
-/* ----------------------------------------------------------------
-	Custom CSS
+/* Registrar la fuente Brittany */
+@font-face {
+    font-family: "Brittany";
+    src: url("/css/Brittany.woff") format("woff");
+    font-weight: normal;
+    font-style: normal;
+}
 
-	Add all your Custom Styled CSS here for New Styles or
-	Overwriting Default Theme Styles for Better Handling Updates
------------------------------------------------------------------*/
+/* Aplicar la fuente Brittany a todo el rotador */
+.text-rotater,
+.text-rotater .t-rotate {
+    font-family: 'Brittany', cursive !important;
+}
+
+/* Mantener transición suave */
+.text-rotater .t-rotate > span {
+    display: inline-block;
+    transition: all 0.3s ease;
+}
 

@@ -6,13 +6,48 @@
     <title>Login - Ingeniería de Software 2</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: #f5f6fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* Quitamos el background de color sólido */
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            position: relative; /* Necesario para posicionar el fondo */
+            overflow: hidden;   /* Evita barras de scroll si el blur se sale un poco */
+        }
+
+        /* --- CAPA DEL FONDO (IMAGEN + BLUR) --- */
+        body::before {
+            content: "";
+            position: fixed; /* Se queda fijo en la pantalla */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Se pone DETRÁS del contenido */
+
+            /* --- TU IMAGEN --- */
+            /* Asegúrate de cambiar la ruta a tu imagen real */
+            background-image: url('img/fondo-boda.jpg'); 
+            background-size: cover;      /* Cubre toda la pantalla */
+            background-position: center; /* Centra la imagen */
+            background-repeat: no-repeat;
+
+            /* --- EL EFECTO BLUR --- */
+            filter: blur(1.5px); /* Cambia 8px para más o menos borroso */
+            
+            /* Truco Pro: Aumentamos un poco el tamaño para evitar bordes blancos difuminados */
+            transform: scale(1.1); 
+        }
+
+        /* Opcional: Una capa oscura encima para que el formulario resalte más */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.3); /* Oscurece la imagen un 30% */
+            z-index: -1;
         }
         .login-container {
             background: #fff;

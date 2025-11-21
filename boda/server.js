@@ -72,15 +72,15 @@ async function getOrCreateCatalogoId(client, coloresArray) {
 app.post('/register', async (req, res) => {
     const { nombre, correo, contrasena, presupuesto, codigo_pareja_input, colores } = req.body;
     
-    // --- AÑADE ESTA LÍNEA PARA VERIFICAR LOS COLORES---
-    console.log('--- NUEVO REGISTRO RECIBIDO ---');
-    console.log('Colores recibidos del frontend:', colores);
+    console.log('--- NUEVO REGISTRO ---');
+    console.log('Colores recibidos:', colores);
+
     const client = await pool.connect();
     
     try {
         await client.query('BEGIN');
 
-        // 1. Verificar si el email ya existe
+        // 1. Verificar email
         const checkMail = await client.query('SELECT id_usuario FROM Usuario WHERE email = $1', [correo]);
         if (checkMail.rows.length > 0) {
             await client.query('ROLLBACK');
@@ -89,72 +89,102 @@ app.post('/register', async (req, res) => {
 
         let cuentaParejaId;
         let codigoFinal;
-        const preferenciaColorString = colores ? colores.sort().join(',') : ''; // Guardamos la preferencia individual ordenada
+        // Ordenamos los colores individuales del usuario actual
+        const coloresUsuarioActual = colores ? colores.sort() : [];
+        const preferenciaColorString = coloresUsuarioActual.join(',');
 
+        // ============================================================
+        // ESCENARIO A: EL USUARIO SE UNE A UNA CUENTA EXISTENTE (USER 2)
+        // ============================================================
         if (codigo_pareja_input && codigo_pareja_input.trim() !== "") {
-            // --- LÓGICA PARA EL USUARIO 2 (Unirse a una cuenta) ---
             
             const codigoInput = codigo_pareja_input.trim().toUpperCase();
             
-            // 2. Buscar la CuentaPareja
-            const cuentaRes = await client.query('SELECT id_cuentapareja FROM CuentaPareja WHERE codigodepareja = $1', [codigoInput]);
+            // Buscar la cuenta
+            const cuentaRes = await client.query('SELECT id_cuentapareja, fk_catalogo_id FROM CuentaPareja WHERE codigodepareja = $1', [codigoInput]);
+
             if (cuentaRes.rows.length === 0) {
                 await client.query('ROLLBACK');
                 return res.status(400).json({ message: 'El código ingresado no existe.' });
             }
+            
             cuentaParejaId = cuentaRes.rows[0].id_cuentapareja;
+            const catalogoIdExistente = cuentaRes.rows[0].fk_catalogo_id;
             codigoFinal = codigoInput;
 
-            // 3. Verificar que la cuenta no esté llena
+            // Verificar cupo
             const checkConteo = await client.query('SELECT count(*) as total, array_agg(preferencia_color) as colores_previos FROM Usuario WHERE fk_cuentapareja_id = $1', [cuentaParejaId]);
-            const totalUsuarios = parseInt(checkConteo.rows[0].total);
-
-            if (totalUsuarios >= 2) {
+            
+            if (parseInt(checkConteo.rows[0].total) >= 2) {
                 await client.query('ROLLBACK');
                 return res.status(400).json({ message: 'Ese código ya tiene 2 personas.' });
             }
 
-            // 4. (NUEVA LÓGICA) Combinar colores y actualizar el Catálogo
-            const user1Colores = checkConteo.rows[0].colores_previos[0] || ''; // 'Rosa,Verde'
-            const user2Colores = preferenciaColorString; // 'Azul'
-
-            // Combinamos todos los colores, evitamos duplicados y ordenamos
-            const coloresPreviosArray = user1Colores ? user1Colores.split(',') : [];
-            const coloresNuevosArray = user2Colores ? user2Colores.split(',') : [];
+            // --- AQUÍ ESTÁ TU CORRECCIÓN ---
+            // En lugar de crear uno nuevo, ACTUALIZAMOS el existente.
             
-            const todosLosColores = [...new Set([...coloresPreviosArray, ...coloresNuevosArray])]; // [ 'Rosa', 'Verde', 'Azul' ]
-            
-            // Buscamos o creamos el ID del *nuevo* tema combinado
-            const fkCatalogoIdCombinado = await getOrCreateCatalogoId(client, todosLosColores);
+            // 1. Obtener colores del User 1
+            const user1ColoresString = checkConteo.rows[0].colores_previos[0] || '';
+            const user1ColoresArray = user1ColoresString ? user1ColoresString.split(',') : [];
 
-            // Actualizamos la CuentaPareja con el nuevo tema
-            if (fkCatalogoIdCombinado) {
-                await client.query('UPDATE CuentaPareja SET fk_catalogo_id = $1 WHERE id_cuentapareja = $2', [fkCatalogoIdCombinado, cuentaParejaId]);
+            // 2. Combinar con colores del User 2 (evitar duplicados y ordenar)
+            const todosLosColores = [...new Set([...user1ColoresArray, ...coloresUsuarioActual])].sort();
+            const coloresFinalesString = todosLosColores.join(',');
+
+            console.log(`Actualizando Catalogo ID ${catalogoIdExistente} a colores: ${coloresFinalesString}`);
+
+            // 3. UPDATE al catálogo existente (Cambiamos colores y aseguramos el nombre)
+            if (catalogoIdExistente) {
+                await client.query(
+                    'UPDATE Catalogo SET colores_asociados = $1, nombre_tema = $2 WHERE id_catalogo = $3',
+                    [coloresFinalesString, `Tema ${codigoFinal}`, catalogoIdExistente]
+                );
+            } else {
+                // Caso borde: Si la cuenta existía pero no tenía catálogo (raro), lo creamos ahora
+                 const createCat = await client.query(
+                    'INSERT INTO Catalogo (nombre_tema, colores_asociados) VALUES ($1, $2) RETURNING id_catalogo',
+                    [`Tema ${codigoFinal}`, coloresFinalesString]
+                );
+                await client.query('UPDATE CuentaPareja SET fk_catalogo_id = $1 WHERE id_cuentapareja = $2', [createCat.rows[0].id_catalogo, cuentaParejaId]);
             }
 
-        } else {
-            // --- LÓGICA PARA EL USUARIO 1 (Crear una cuenta nueva) ---
-            
-            // 2. Generar código único para 'CuentaPareja'
+        } 
+        // ============================================================
+        // ESCENARIO B: CREAR CUENTA NUEVA (USER 1)
+        // ============================================================
+        else {
             codigoFinal = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-            // 3. (NUEVA LÓGICA) Buscar o Crear el ID del catálogo para este primer usuario
-            const fkCatalogoId = await getOrCreateCatalogoId(client, colores); // 'colores' es el array original
+            // --- AQUÍ ESTÁ TU CORRECCIÓN ---
+            // Creamos el catálogo inmediatamente con el nombre del código
+            
+            const nuevoNombreTema = `Tema ${codigoFinal}`; // Ej: "Tema MS4K15"
+            
+            console.log(`Creando nuevo catálogo: ${nuevoNombreTema} con colores: ${preferenciaColorString}`);
 
-            // 4. Insertar el proyecto en 'CuentaPareja'
+            const createThemeRes = await client.query(
+                'INSERT INTO Catalogo (nombre_tema, colores_asociados) VALUES ($1, $2) RETURNING id_catalogo',
+                [nuevoNombreTema, preferenciaColorString]
+            );
+            
+            const nuevoCatalogoId = createThemeRes.rows[0].id_catalogo;
+
+            // Insertar la CuentaPareja vinculada a ese catálogo
             const queryCuenta = `
                 INSERT INTO CuentaPareja (codigodepareja, presupuesto_estimado, fk_catalogo_id) 
                 VALUES ($1, $2, $3) 
                 RETURNING id_cuentapareja`;
-            const resultCuenta = await client.query(queryCuenta, [codigoFinal, presupuesto || 0, fkCatalogoId]);
+            const resultCuenta = await client.query(queryCuenta, [codigoFinal, presupuesto || 0, nuevoCatalogoId]);
             cuentaParejaId = resultCuenta.rows[0].id_cuentapareja;
         }
 
-        // 5. Hashear la contraseña
+        // ============================================================
+        // PASO FINAL: CREAR EL USUARIO
+        // ============================================================
+        
         const saltRounds = 10;
         const hashContrasena = await bcrypt.hash(contrasena, saltRounds);
 
-        // 6. Insertar la persona en 'Usuario' y vincularla
         const queryUsuario = `
             INSERT INTO Usuario (nombre_completo, email, password_hash, preferencia_color, fk_cuentapareja_id) 
             VALUES ($1, $2, $3, $4, $5) 
@@ -162,14 +192,12 @@ app.post('/register', async (req, res) => {
         
         await client.query(queryUsuario, [nombre, correo, hashContrasena, preferenciaColorString, cuentaParejaId]);
 
-        // 7. Finalizar la transacción
         await client.query('COMMIT');
-        
         res.status(201).json({ message: '¡Registro exitoso!', codigo: codigoFinal });
 
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error("Error detallado en /register:", error); // Añadimos más detalle al log
+        console.error("Error en registro:", error);
         res.status(500).json({ message: 'Error en el servidor' });
     } finally {
         client.release();
@@ -444,3 +472,4 @@ app.post('/eliminar-reserva', async (req, res) => {
 app.listen(port, () => {
     console.log(`Servidor escuchando en http://localhost:${port}`);
 });
+app.use(express.static('boda'));
