@@ -1,0 +1,29 @@
+nombre_item;descripcion;costo_base;departamento;color;regla_pago_meses
+Mantelería Borgoña Premium;Tela de lino/seda para mesas redondas (Rojo Vino);400;Santa Cruz;Rojo;3
+Arreglo Floral Morado;Centro de mesa con rosas, hortensias y follaje (tono lila/morado);600;La Paz;Morado;6
+Mantelería Dorada Estándar;Tela de color amarillo mostaza/dorado para mesas redondas ;350;Cochabamba;Amarillo;3
+Lazos de Silla Verde Salvia;Cintas anchas para sillas Chiavari en color verde oliva;150;Tarija;Verde;0
+Caminos de Mesa Naranja;Tela de algodón tipo rústico en tono naranja quemado/coral;180;La Paz;Naranja;3
+Mantelería Sencilla Viñedo;Manteles color crema o blanco para mesas largas en exterior;200;Tarija;Blanco;3
+Arreglo Pampa Grass;Centro de mesa rústico con pampas grass y flores secas;450;Potosí;Cafe;6
+Mantelería Azul Marino;Tela pesada de color azul oscuro (Navy) para mesas redondas;380;Chuquisaca;Azul;3
+
+
+====== sql===
+INSERT INTO Decoraciones (
+    nombre_item,
+    descripcion,
+    costo_base,
+    departamento,
+    url_imagen,
+    color,
+    regla_pago_meses
+) VALUES
+('Mantelería Borgoña Premium', 'Tela de lino/seda para mesas redondas (Rojo Vino)', 400.00, 'Santa Cruz', 'boda/catalogo/decoracion/manteleria_borgona.jpg', 'Rojo', 3),
+('Arreglo Floral Morado', 'Centro de mesa con rosas, hortensias y follaje (tono lila/morado)', 600.00, 'La Paz', 'boda/catalogo/decoracion/arreglo_floral_morado.jpg', 'Morado', 6),
+('Mantelería Dorada Estándar', 'Tela de color amarillo mostaza/dorado para mesas redondas', 350.00, 'Cochabamba', 'boda/catalogo/decoracion/manteleria_dorada.jpg', 'Amarillo', 3),
+('Lazos de Silla Verde Salvia', 'Cintas anchas para sillas Chiavari en color verde oliva', 150.00, 'Tarija', 'boda/catalogo/decoracion/lazos_silla_verde.jpg', 'Verde', 6),
+('Caminos de Mesa Naranja', 'Tela de algodón tipo rústico en tono naranja quemado/coral', 180.00, 'La Paz', 'boda/catalogo/decoracion/caminos_mesa_naranja.jpg', 'Naranja', 3),
+('Mantelería Sencilla Viñedo', 'Manteles color crema o blanco para mesas largas en exterior', 200.00, 'Tarija', 'boda/catalogo/decoracion/manteleria_vinedo.jpg', 'Blanco', 3),
+('Arreglo Pampa Grass', 'Centro de mesa rústico con pampas grass y flores secas', 450.00, 'Potosí', 'boda/catalogo/decoracion/arreglo_pampa.jpg', 'Cafe', 6),
+('Mantelería Azul Marino', 'Tela pesada de color azul oscuro (Navy) para mesas redondas', 380.00, 'Chuquisaca', 'boda/catalogo/decoracion/manteleria_azul.jpg', 'Azul', 3);

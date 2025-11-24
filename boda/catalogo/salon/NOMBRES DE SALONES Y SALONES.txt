@@ -1,0 +1,42 @@
+nombre_lugar;costo_base;departamento;capacidad;regla_pago_meses;incluye_mesas;incluye_cubiertos
+Salón Conquistador (Los Tajibos);35000;Santa Cruz;600;6;true;true
+Biocentro Güembé (Jardín Principal);28000;Santa Cruz;350;4;true;false
+Salón Fantasía;32000;La Paz;550;6;true;true
+Salón de Eventos El Portal;29000;Cochabamba;700;8;true;true
+Salón Chiquitano (Fexpocruz);25000;Santa Cruz;400;3;true;true
+Hostería El Campanario;18000;Tarija;200;5;true;true
+Gran Hotel Cochabamba (Salón Candelas);27000;Cochabamba;380;6;true;true
+Círculo Aeronáutico;19500;La Paz;300;3;true;false
+Viñedos y Bodega Aranjuez;22000;Tarija;250;6;true;true
+Salón Los Parques;15000;Chuquisaca;180;0;true;true
+Hotel Europa (Salón Paititi);26000;La Paz;420;6;true;true
+Quinta La Rinconada;21500;Cochabamba;450;4;true;false
+Salón Real Santa Cruz;31000;Santa Cruz;500;6;true;true
+Hotel Camino Real (Salón Emperador);28500;La Paz;360;6;true;true
+Salón El Gran Plaza;17000;Potosí;250;3;true;true
+======
+INSERT INTO Salon (
+    nombre_lugar,
+    costo_base,
+    departamento,
+    capacidad,
+    url_imagen,
+    regla_pago_meses,
+    incluye_mesas,
+    incluye_cubiertos
+) VALUES
+('Salón Conquistador (Los Tajibos)', 35000.00, 'Santa Cruz', 600, 'catalogo/salon/tajibos_santacruz.jpg', 6, TRUE, TRUE),
+('Biocentro Güembé (Jardín Principal)', 28000.00, 'Santa Cruz', 350, 'catalogo/salon/guembe_santacruz.jpg', 4, TRUE, FALSE),
+('Salón Fantasía', 32000.00, 'La Paz', 550, 'catalogo/salon/fantasia_lapaz.jpg', 6, TRUE, TRUE),
+('Salón de Eventos El Portal', 29000.00, 'Cochabamba', 700, 'catalogo/salon/el_portal_cochabamba.jpg', 8, TRUE, TRUE),
+('Salón Chiquitano (Fexpocruz)', 25000.00, 'Santa Cruz', 400, 'catalogo/salon/fexpocruz_santacruz.jpg', 3, TRUE, TRUE),
+('Hostería El Campanario', 18000.00, 'Tarija', 200, 'catalogo/salon/el_campanario_tarija.jpg', 5, TRUE, TRUE),
+('Gran Hotel Cochabamba (Salón Candelas)', 27000.00, 'Cochabamba', 380, 'catalogo/salon/hotel_cochabamba.jpg', 6, TRUE, TRUE),
+('Círculo Aeronáutico', 19500.00, 'La Paz', 300, 'catalogo/salon/aeronautico_lapaz.jpg', 3, TRUE, FALSE),
+('Viñedos y Bodega Aranjuez', 22000.00, 'Tarija', 250, 'catalogo/salon/Aranjuez_tarija.jpg', 6, TRUE, TRUE),
+('Salón Los Parques', 15000.00, 'Chuquisaca', 180, 'catalogo/salon/Los_parques_chuquisaca.jpg', 0, TRUE, TRUE),
+('Hotel Europa (Salón Paititi)', 26000.00, 'La Paz', 420, 'catalogo/salon/Paititi_lapaz.jpg', 6, TRUE, TRUE),
+('Quinta La Rinconada', 21500.00, 'Cochabamba', 450, 'catalogo/salon/Rinconada_cochabamba.jpg', 4, TRUE, FALSE),
+('Salón Real Santa Cruz', 31000.00, 'Santa Cruz', 500, 'catalogo/salon/Real_santacruz.jpg', 6, TRUE, TRUE),
+('Hotel Camino Real (Salón Emperador)', 28500.00, 'La Paz', 360, 'catalogo/salon/Camino_real_lapaz.jpg', 6, TRUE, TRUE),
+('Salón El Gran Plaza', 17000.00, 'Potosí', 250, 'catalogo/salon/gran_plaza_potosi.jpg', 3, TRUE, TRUE);

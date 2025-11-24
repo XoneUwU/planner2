@@ -31,7 +31,7 @@
         /* --- Menú Desplegable --- */
         .menu-dropdown { position: relative; display: inline-block; }
         .menu-btn {
-            background-color: #3498db;
+            background-color: #068238c0;
             color: white;
             padding: 10px 15px;
             font-size: 16px;
@@ -59,7 +59,7 @@
         }
         .dropdown-content a:hover { background-color: #ddd; }
         .menu-dropdown:hover .dropdown-content { display: block; }
-        .menu-dropdown:hover .menu-btn { background-color: #2980b9; }
+        .menu-dropdown:hover .menu-btn { background-color: #0a5b0cd0; }
         
         /* --- Galería Estilo Pinterest --- */
         .gallery-container {
@@ -146,6 +146,28 @@
             </div>
         </div>
     </header>
+    <aside class="sidebar centered" style="padding: 20px;  margin: 2px auto; background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">    
+        <label>Departamento</label>
+            <select id="filterDpto">
+                <option value="">Todos (Bolivia)</option>
+                <option value="Cochabamba">Cochabamba</option>
+                <option value="Santa Cruz">Santa Cruz</option>
+                <option value="La Paz">La Paz</option>
+                <option value="Tarija">Tarija</option>
+                <option value="Chuquisaca">Chuquisaca</option>
+                <option value="Potosí">Potosí</option>
+                <option value="Oruro">Oruro</option>
+                <option value="Beni">Beni</option>
+                <option value="Pando">Pando</option>
+            </select>
+        <label>Capacidad (Salones)</label>
+        <input type="number" id="filterCap" placeholder="Mínimo de personas">
+
+        <label>Fecha Boda</label>
+        <input type="date" id="filterDate">
+
+        <button class="btn-filter" onclick="aplicarFiltros()">Aplicar Preferencias</button>
+    </aside>
 
     <main class="gallery-container" id="galleryContainer">
         </main>
@@ -155,75 +177,190 @@
     </div>
 
 <script>
-    // ... (Variables de scroll sin cambios) ...
+    // --- VARIABLES GLOBALES ---
+    let isLoading = false;
+    const galleryContainer = document.getElementById('galleryContainer');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    
+    // Aquí guardaremos los productos que nos envíe la base de datos
+    let productosDelCatalogo = []; 
+    let productosMostrados = 0;
 
-    // --- SCRIPT PARA CARGAR DATOS DEL USUARIO (ACTUALIZADO) ---
+    // --- 1. AL CARGAR LA PÁGINA ---
     window.addEventListener('DOMContentLoaded', async () => {
-        // 1. Leer el ÚNICO dato guardado: el ID
+        // Verificar sesión
         const idUsuario = localStorage.getItem('usuarioId');
-
         if (!idUsuario) {
-            // Si no hay ID, no hay sesión
             window.location.href = 'Login.html';
             return;
         }
 
-        // 2. Pedir al backend la info del header
+        // A. Cargar Info del Header (Nombre y Presupuesto)
         try {
             const response = await fetch(`http://localhost:3000/header-info/${idUsuario}`);
             const data = await response.json();
 
             if (data.success) {
                 let presupuesto = parseFloat(data.usuario.presupuesto_estimado).toLocaleString('es-ES', { 
-                    style: 'currency', 
-                    currency: 'BOB'
+                    style: 'currency', currency: 'BOB' 
                 });
                 document.getElementById('userName').textContent = data.usuario.nombre;
                 document.getElementById('userBudget').textContent = `Presupuesto: ${presupuesto}`;
-            } else {
-                throw new Error('Usuario no encontrado');
             }
         } catch (error) {
-            console.error(error);
-            // Si falla al buscar el ID, la sesión es inválida
-            localStorage.clear();
-            window.location.href = 'Login.html';
-            return;
+            console.error("Error cargando header:", error);
         }
 
-        // 3. Cargar el primer set de imágenes (sin cambios)
-        loadMoreImages();
+        // B. Cargar el Catálogo Personalizado (Productos reales)
+        await loadInitialImages(idUsuario);
     });
 
-    // --- SCRIPT PARA CERRAR SESIÓN ---
-    function cerrarSesion() {
-        localStorage.clear(); // Borra solo el ID
-        window.location.href = 'Login.html';
+    // --- 2. FUNCIÓN PARA PEDIR PRODUCTOS AL SERVIDOR ---
+// 1. Modificar 'loadInitialImages' para aceptar filtros
+// 1. FUNCIÓN DE CARGA INTELIGENTE
+    async function loadInitialImages(idUsuario, filtros = {}) {
+        loadingIndicator.classList.add('show');
+        galleryContainer.innerHTML = ''; 
+        productosMostrados = 0; 
+
+        try {
+            // Construimos la URL base
+            let url = `http://localhost:3000/catalogo-personalizado/${idUsuario}?`;
+            
+            // Agregamos los parámetros si existen
+            if (filtros.fecha) url += `&fecha=${filtros.fecha}`;
+            if (filtros.dpto) url += `&dpto=${encodeURIComponent(filtros.dpto)}`;
+            if (filtros.capacidad) url += `&capacidad=${filtros.capacidad}`;
+
+            console.log("Consultando:", url); // Para depurar
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.success && data.productos.length > 0) {
+                productosDelCatalogo = data.productos;
+                addImagesToDOM();
+            } else {
+                galleryContainer.innerHTML = `
+                    <div style="text-align:center; width:100%; grid-column: 1 / -1; color:#666; padding: 40px;">
+                        <h3>No hay resultados con estos filtros.</h3>
+                        <p>Intenta cambiar el departamento o la fecha.</p>
+                    </div>`;
+            }
+
+        } catch (error) {
+            console.error(error);
+            galleryContainer.innerHTML = "<p>Error de conexión.</p>";
+        } finally {
+            loadingIndicator.classList.remove('show');
+        }
     }
 
-    // --- GUARDAR IMAGEN (SIN CAMBIOS) ---
-    async function guardarImagen(url, descripcion) {
+    // 2. EL BOTÓN "APLICAR FILTROS"
+    function aplicarFiltros() {
         const idUsuario = localStorage.getItem('usuarioId');
-        // ... (Tu código de guardar imagen que ya funciona está perfecto)
+        
+        // Capturamos los valores de los inputs del Sidebar
+        const dpto = document.getElementById('filterDpto').value;
+        const cap = document.getElementById('filterCap').value;
+        const fecha = document.getElementById('filterDate').value;
+        
+        // Recargamos el catálogo enviando todo
+        loadInitialImages(idUsuario, { 
+            fecha: fecha,
+            dpto: dpto,
+            capacidad: cap
+        });
+    }
+
+    // --- 3. FUNCIÓN PARA PINTAR LAS IMÁGENES (Paginación local) ---
+    function addImagesToDOM() {
+        const limite = Math.min(productosMostrados + 10, productosDelCatalogo.length);
+        
+        for (let i = productosMostrados; i < limite; i++) {
+            const producto = productosDelCatalogo[i];
+            const item = createImageItem(producto);
+            galleryContainer.appendChild(item);
+        }
+        productosMostrados = limite;
+    }
+
+    // --- 4. CREAR EL HTML DE CADA PRODUCTO ---
+    function createImageItem(producto) { 
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+
+        // Datos reales de la BD
+        // Nota: Si tu imagen en BD empieza con "boda/...", asegúrate que la ruta sea correcta
+        // desde donde se ejecuta el HTML. Si no carga, probamos ajustando la ruta.
+        const imageUrl = producto.url_imagen; 
+        const titulo = producto.nombre_item;
+        const precio = parseFloat(producto.costo_base).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
+
+        const img = document.createElement('img');
+        img.src = imageUrl; 
+        img.alt = titulo;
+        
+        // Si la imagen falla (ruta mal escrita en BD), muestra esto:
+        img.onerror = function() { 
+            this.src = 'https://placehold.co/400x300?text=Sin+Imagen'; 
+        };
+
+        const p = document.createElement('p');
+        // Mostrar Título y Precio bonito
+        p.innerHTML = `<strong>${titulo}</strong><br><span style="color:#27ae60; font-size:0.9em;">${precio}</span>`;
+
+        const btn = document.createElement('button');
+        btn.className = 'select-btn';
+        btn.textContent = '❤ Seleccionar';
+        
+        // Al hacer clic, llamamos a guardarItem pasando TODO el objeto producto
+        btn.onclick = () => guardarItem(producto); 
+
+        item.appendChild(img);
+        item.appendChild(p);
+        item.appendChild(btn);
+        
+        return item;
+    }
+
+    // --- 5. SCROLL INFINITO ---
+    window.addEventListener('scroll', () => {
+        if (isLoading) return;
+        // Si llegamos al final, cargamos más de la lista que ya tenemos en memoria
+        if (window.innerHeight + window.scrollY >= document.documentElement.offsetHeight - 100) {
+            addImagesToDOM();
+        }
+    });
+
+    // --- 6. FUNCIÓN GUARDAR (CREAR RESERVA REAL) ---
+    async function guardarItem(producto) { 
+        const idUsuario = localStorage.getItem('usuarioId');
         if(!idUsuario) {
             alert("Debes iniciar sesión para guardar.");
             return;
         }
+
         try {
-            const response = await fetch('http://localhost:3000/guardar-imagen', {
+            const response = await fetch('http://localhost:3000/crear-reserva', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     id_usuario: idUsuario, 
-                    url_imagen: url, 
-                    descripcion: descripcion 
+                    // Enviamos los datos clave para la tabla Reserva
+                    id_opcion: producto.id, 
+                    tipo_opcion: producto.tipo, // 'Salon', 'Decoracion', etc.
+                    monto_total: producto.costo_base, 
+                    regla_pago_meses: producto.regla_pago_meses 
                 })
             });
+
             const data = await response.json();
             if(data.success) {
-                alert("¡Imagen guardada en tu perfil!");
+                alert("¡Ítem guardado en tu perfil!");
+                // Opcional: Cambiar el botón a "Guardado"
             } else {
-                alert("Error al guardar la imagen.");
+                alert("Error al guardar: " + data.message);
             }
         } catch (e) {
             console.error(e);
@@ -231,58 +368,10 @@
         }
     }
 
-    // ... (El resto del script de scroll infinito y crear item NO cambia) ...
-    let isLoading = false;
-    let imageCounter = 1;
-    const galleryContainer = document.getElementById('galleryContainer');
-    const loadingIndicator = document.getElementById('loadingIndicator');
-
-    window.addEventListener('scroll', () => {
-        if (isLoading) return;
-        if (window.innerHeight + window.scrollY >= document.documentElement.offsetHeight - 100) {
-            loadMoreImages();
-        }
-    });
-
-    function loadMoreImages() {
-        isLoading = true;
-        loadingIndicator.classList.add('show');
-        setTimeout(() => {
-            for (let i = 0; i < 10; i++) {
-                const item = createImageItem();
-                galleryContainer.appendChild(item);
-            }
-            isLoading = false;
-            loadingIndicator.classList.remove('show');
-        }, 1000);
-    }
-
-    function createImageItem() {
-        const item = document.createElement('div');
-        item.className = 'gallery-item';
-
-        const randomHeight = Math.floor(Math.random() * 300) + 300;
-        const randomColor = Math.floor(Math.random()*16777215).toString(16);
-        const imageUrl = `https://placehold.co/400x${randomHeight}/${randomColor}/white?text=Imagen+${imageCounter}`;
-        const desc = `Idea de Boda #${imageCounter}`;
-
-        const img = document.createElement('img');
-        img.src = imageUrl;
-
-        const p = document.createElement('p');
-        p.textContent = desc;
-
-        const btn = document.createElement('button');
-        btn.className = 'select-btn';
-        btn.textContent = '❤ Seleccionar';
-        btn.onclick = () => guardarImagen(imageUrl, desc);
-
-        item.appendChild(img);
-        item.appendChild(p);
-        item.appendChild(btn);
-        
-        imageCounter++;
-        return item;
+    // --- 7. CERRAR SESIÓN ---
+    function cerrarSesion() {
+        localStorage.clear();
+        window.location.href = 'Login.html';
     }
 </script>
 </body>

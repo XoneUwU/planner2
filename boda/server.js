@@ -9,13 +9,14 @@ const port = 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(__dirname));
+// Ajusta esto si tus html están en la carpeta 'boda'
+app.use(express.static(__dirname)); 
 
 const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
-    database: 'bodaantes',
-    password: '13498710', // TU CONTRASEÑA
+    database: 'bodaantes', // ¡Asegúrate de que sea el nombre correcto de tu BD!
+    password: '13498710',
     port: 5432,
 });
 
@@ -23,52 +24,10 @@ const pool = new Pool({
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'home.html'));
 });
-// --- RUTA DE REGISTRO (ACTUALIZADA PARA LA NUEVA BD) ---
-// --- RUTA DE REGISTRO (ACTUALIZADA CON LÓGICA 'BUSCAR O CREAR' CATÁLOGO) ---
 
-// Helper function para buscar o crear el catálogo
-// La usaremos para el Usuario 1 y para el Usuario 2
-async function getOrCreateCatalogoId(client, coloresArray) {
-    // --- AÑADE ESTA LÍNEA ---
-    console.log('Intentando Buscar/Crear Catálogo con:', coloresArray);
-    // -------------------------
-    if (!coloresArray || coloresArray.length === 0) {
-        // --- AÑADE ESTA LÍNEA ---
-        console.log('Resultado: El array de colores estaba vacío. Devolviendo NULL.');
-        // -------------------------
-        return null; // Si no hay colores, no hay catálogo
-    }
-
-    // 1. Estandarizar: ordenar alfabéticamente y unir
-    const coloresString = coloresArray.sort().join(','); // Ej: 'Celeste,Morado'
-    // --- AÑADE ESTA LÍNEA ---
-    console.log(`Buscando en BD el tema: '${coloresString}'`);
-    // -------------------------
-    // 2. Buscar
-    let themeRes = await client.query('SELECT id_catalogo FROM Catalogo WHERE colores_asociados = $1', [coloresString]);
-
-    if (themeRes.rows.length > 0) {
-        // --- Encontrado ---
-        // --- AÑADE ESTA LÍNEA ---
-        console.log('Resultado: Tema encontrado. ID:', themeRes.rows[0].id_catalogo);
-        // -
-        return themeRes.rows[0].id_catalogo;
-    } else {
-        // --- No Encontrado: Crear ---
-        // --- AÑADE ESTA LÍNEA ---
-        console.log(`Resultado: Tema NO encontrado. Creando nuevo tema: '${coloresString}'`);
-        // -------------------------
-        const nuevoTemaNombre = `Tema ${coloresString.replace(',', ' y ')}`; // Ej: 'Tema Celeste y Morado'
-        
-        const createThemeRes = await client.query(
-            'INSERT INTO Catalogo (nombre_tema, colores_asociados) VALUES ($1, $2) RETURNING id_catalogo',
-            [nuevoTemaNombre, coloresString]
-        );
-        return createThemeRes.rows[0].id_catalogo;
-    }
-}
-
-
+// ==================================================================
+// 1. RUTA DE REGISTRO (Lógica: Catálogo Personalizado por Pareja)
+// ==================================================================
 app.post('/register', async (req, res) => {
     const { nombre, correo, contrasena, presupuesto, codigo_pareja_input, colores } = req.body;
     
@@ -93,14 +52,14 @@ app.post('/register', async (req, res) => {
         const coloresUsuarioActual = colores ? colores.sort() : [];
         const preferenciaColorString = coloresUsuarioActual.join(',');
 
-        // ============================================================
+        // ------------------------------------------------------------
         // ESCENARIO A: EL USUARIO SE UNE A UNA CUENTA EXISTENTE (USER 2)
-        // ============================================================
+        // ------------------------------------------------------------
         if (codigo_pareja_input && codigo_pareja_input.trim() !== "") {
             
             const codigoInput = codigo_pareja_input.trim().toUpperCase();
             
-            // Buscar la cuenta
+            // Buscar la cuenta y su catálogo asociado
             const cuentaRes = await client.query('SELECT id_cuentapareja, fk_catalogo_id FROM CuentaPareja WHERE codigodepareja = $1', [codigoInput]);
 
             if (cuentaRes.rows.length === 0) {
@@ -112,7 +71,7 @@ app.post('/register', async (req, res) => {
             const catalogoIdExistente = cuentaRes.rows[0].fk_catalogo_id;
             codigoFinal = codigoInput;
 
-            // Verificar cupo
+            // Verificar cupo (Máximo 2 usuarios)
             const checkConteo = await client.query('SELECT count(*) as total, array_agg(preferencia_color) as colores_previos FROM Usuario WHERE fk_cuentapareja_id = $1', [cuentaParejaId]);
             
             if (parseInt(checkConteo.rows[0].total) >= 2) {
@@ -120,27 +79,25 @@ app.post('/register', async (req, res) => {
                 return res.status(400).json({ message: 'Ese código ya tiene 2 personas.' });
             }
 
-            // --- AQUÍ ESTÁ TU CORRECCIÓN ---
-            // En lugar de crear uno nuevo, ACTUALIZAMOS el existente.
-            
-            // 1. Obtener colores del User 1
+            // --- LÓGICA DE ACTUALIZACIÓN DEL CATÁLOGO ---
+            // Obtenemos colores del User 1
             const user1ColoresString = checkConteo.rows[0].colores_previos[0] || '';
             const user1ColoresArray = user1ColoresString ? user1ColoresString.split(',') : [];
 
-            // 2. Combinar con colores del User 2 (evitar duplicados y ordenar)
+            // Combinamos con colores del User 2 (evitar duplicados y ordenar)
             const todosLosColores = [...new Set([...user1ColoresArray, ...coloresUsuarioActual])].sort();
             const coloresFinalesString = todosLosColores.join(',');
 
             console.log(`Actualizando Catalogo ID ${catalogoIdExistente} a colores: ${coloresFinalesString}`);
 
-            // 3. UPDATE al catálogo existente (Cambiamos colores y aseguramos el nombre)
+            // ACTUALIZAMOS el catálogo existente
             if (catalogoIdExistente) {
                 await client.query(
                     'UPDATE Catalogo SET colores_asociados = $1, nombre_tema = $2 WHERE id_catalogo = $3',
                     [coloresFinalesString, `Tema ${codigoFinal}`, catalogoIdExistente]
                 );
             } else {
-                // Caso borde: Si la cuenta existía pero no tenía catálogo (raro), lo creamos ahora
+                // (Caso raro de seguridad: si no tenía catálogo, creamos uno)
                  const createCat = await client.query(
                     'INSERT INTO Catalogo (nombre_tema, colores_asociados) VALUES ($1, $2) RETURNING id_catalogo',
                     [`Tema ${codigoFinal}`, coloresFinalesString]
@@ -149,19 +106,16 @@ app.post('/register', async (req, res) => {
             }
 
         } 
-        // ============================================================
+        // ------------------------------------------------------------
         // ESCENARIO B: CREAR CUENTA NUEVA (USER 1)
-        // ============================================================
+        // ------------------------------------------------------------
         else {
             codigoFinal = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-            // --- AQUÍ ESTÁ TU CORRECCIÓN ---
-            // Creamos el catálogo inmediatamente con el nombre del código
-            
-            const nuevoNombreTema = `Tema ${codigoFinal}`; // Ej: "Tema MS4K15"
-            
+            const nuevoNombreTema = `Tema ${codigoFinal}`; 
             console.log(`Creando nuevo catálogo: ${nuevoNombreTema} con colores: ${preferenciaColorString}`);
 
+            // Creamos el catálogo INMEDIATAMENTE (aunque solo tenga los colores de 1 persona)
             const createThemeRes = await client.query(
                 'INSERT INTO Catalogo (nombre_tema, colores_asociados) VALUES ($1, $2) RETURNING id_catalogo',
                 [nuevoNombreTema, preferenciaColorString]
@@ -169,7 +123,7 @@ app.post('/register', async (req, res) => {
             
             const nuevoCatalogoId = createThemeRes.rows[0].id_catalogo;
 
-            // Insertar la CuentaPareja vinculada a ese catálogo
+            // Crear la CuentaPareja vinculada
             const queryCuenta = `
                 INSERT INTO CuentaPareja (codigodepareja, presupuesto_estimado, fk_catalogo_id) 
                 VALUES ($1, $2, $3) 
@@ -178,10 +132,9 @@ app.post('/register', async (req, res) => {
             cuentaParejaId = resultCuenta.rows[0].id_cuentapareja;
         }
 
-        // ============================================================
+        // ------------------------------------------------------------
         // PASO FINAL: CREAR EL USUARIO
-        // ============================================================
-        
+        // ------------------------------------------------------------
         const saltRounds = 10;
         const hashContrasena = await bcrypt.hash(contrasena, saltRounds);
 
@@ -204,19 +157,16 @@ app.post('/register', async (req, res) => {
     }
 });
 
-// --- RUTA DE LOGIN (ACTUALIZADA PARA LA NUEVA BD) ---
+// ==================================================================
+// 2. RUTA DE LOGIN
+// ==================================================================
 app.post('/login', async (req, res) => {
-    // Los datos del frontend (correo, contrasena) son los mismos
     const { correo, contrasena } = req.body;
 
     try {
-        // --- Paso 1: Autenticar al Usuario ---
-        
-        // Buscamos en la nueva tabla 'Usuario' (notar los nuevos nombres de columnas)
         const queryUsuario = `
             SELECT id_usuario, nombre_completo, password_hash, fk_cuentapareja_id 
-            FROM Usuario 
-            WHERE email = $1`;
+            FROM Usuario WHERE email = $1`;
         
         const resultUsuario = await pool.query(queryUsuario, [correo]);
 
@@ -225,46 +175,33 @@ app.post('/login', async (req, res) => {
         }
 
         const usuario = resultUsuario.rows[0];
-
-        // Comparamos la contraseña (tu lógica bcrypt es perfecta)
-        // Usamos 'password_hash' de la nueva tabla
         const match = await bcrypt.compare(contrasena, usuario.password_hash);
 
         if (!match) {
             return res.status(401).json({ success: false, message: 'Contraseña incorrecta' });
         }
 
-        // --- Paso 2: Cargar el Proyecto (CuentaPareja) ---
-        
-        // Si la contraseña es correcta, usamos el FK para buscar el proyecto compartido
         const idCuentaPareja = usuario.fk_cuentapareja_id;
         
         const queryCuenta = `
             SELECT id_cuentapareja, codigodepareja, presupuesto_estimado, fecha_boda, cantidad_invitados, fk_catalogo_id 
-            FROM CuentaPareja 
-            WHERE id_cuentapareja = $1`;
+            FROM CuentaPareja WHERE id_cuentapareja = $1`;
             
         const resultCuenta = await pool.query(queryCuenta, [idCuentaPareja]);
         
         if (resultCuenta.rows.length === 0) {
-            // Esto sería un error grave en la BD (un usuario sin cuenta)
-            return res.status(500).json({ success: false, message: 'Error: No se encontró la cuenta de pareja asociada.' });
+            return res.status(500).json({ success: false, message: 'Error: Cuenta de pareja no encontrada.' });
         }
 
         const cuentaPareja = resultCuenta.rows[0];
 
-        // --- Paso 3: Enviar la Sesión Completa al Frontend ---
-        
-        // Combinamos los datos del Usuario y de la CuentaPareja
         res.status(200).json({
             success: true,
             message: 'Login correcto',
-            // Datos del usuario individual
             usuario: {
                 id: usuario.id_usuario,
                 nombre: usuario.nombre_completo 
             },
-            // Datos del proyecto compartido
             cuenta: {
                 id: cuentaPareja.id_cuentapareja,
                 codigo: cuentaPareja.codigodepareja,
@@ -281,62 +218,35 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// --- GUARDAR IMAGEN (ARREGLADO EL ERROR DE FECHA) ---
-app.post('/guardar-imagen', async (req, res) => {
-    const { id_usuario, url_imagen, descripcion } = req.body;
-    try {
-        // Ahora la tabla ya tiene fecha_guardado (se llena sola con DEFAULT)
-        const query = 'INSERT INTO imagenes_guardadas (id_usuario, url_imagen, descripcion) VALUES ($1, $2, $3) RETURNING id_imagen';
-        await pool.query(query, [id_usuario, url_imagen, descripcion]);
-        res.json({ success: true, message: 'Imagen guardada' });
-    } catch (error) {
-        console.error('Error al guardar imagen:', error);
-        res.status(500).json({ success: false, message: 'Error al guardar' });
-    }
-});
-
-// --- RUTA DE PERFIL (ACTUALIZADA PARA LA NUEVA BD) ---
-// Ahora la llamamos con el ID de Usuario y devuelve TODOS los datos del proyecto
+// ==================================================================
+// 3. RUTA DE PERFIL COMPLETO
+// ==================================================================
 app.get('/perfil-completo/:id', async (req, res) => {
     const idUsuario = req.params.id;
 
-    if (!idUsuario) {
-        return res.status(400).json({ success: false, message: 'Falta ID de usuario' });
-    }
+    if (!idUsuario) return res.status(400).json({ success: false, message: 'Falta ID' });
 
     try {
-        // 1. Obtener mis datos (Nombre, ID de cuenta)
         const userQuery = 'SELECT nombre_completo, fk_cuentapareja_id FROM Usuario WHERE id_usuario = $1';
         const userRes = await pool.query(userQuery, [idUsuario]);
         
-        if (userRes.rows.length === 0) {
-            return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
-        }
+        if (userRes.rows.length === 0) return res.status(404).json({ success: false });
         
         const miPerfil = userRes.rows[0];
-        const miNombre = miPerfil.nombre_completo;
         const idCuentaPareja = miPerfil.fk_cuentapareja_id;
 
-        // 2. Obtener los datos de la CuentaPareja (El Proyecto)
         const cuentaQuery = 'SELECT codigodepareja, presupuesto_estimado, fecha_boda FROM CuentaPareja WHERE id_cuentapareja = $1';
         const cuentaRes = await pool.query(cuentaQuery, [idCuentaPareja]);
         const miCuenta = cuentaRes.rows[0];
 
-        // 3. Buscar a mi pareja
         let nombrePareja = null;
         const parejaQuery = 'SELECT nombre_completo FROM Usuario WHERE fk_cuentapareja_id = $1 AND id_usuario != $2';
         const parejaRes = await pool.query(parejaQuery, [idCuentaPareja, idUsuario]);
-        if (parejaRes.rows.length > 0) {
-            nombrePareja = parejaRes.rows[0].nombre_completo;
-        }
+        if (parejaRes.rows.length > 0) nombrePareja = parejaRes.rows[0].nombre_completo;
 
-        // 4. Buscar ítems guardados (Reservas) - ESTA ES LA NUEVA LÓGICA
-        // Esta consulta une la Reserva con las 5 tablas de opciones
+        // Consulta para traer los ítems reservados
         const itemsQuery = `
-            SELECT 
-                r.id_reserva, r.tipo_opcion, r.monto_total, r.estado_pago, r.fecha_limite_pago,
-                
-                -- Usamos CASE para obtener el nombre del producto de la tabla correcta
+            SELECT r.id_reserva, r.tipo_opcion, r.monto_total, r.estado_pago,
                 CASE
                     WHEN r.tipo_opcion = 'Salon' THEN s.nombre_lugar
                     WHEN r.tipo_opcion = 'Decoracion' THEN d.nombre_item
@@ -344,8 +254,6 @@ app.get('/perfil-completo/:id', async (req, res) => {
                     WHEN r.tipo_opcion = 'Fotografo' THEN f.nombre_servicio
                     WHEN r.tipo_opcion = 'Planeador' THEN p.nombre_servicio
                 END AS nombre_item,
-                
-                -- Usamos CASE para obtener la imagen de la tabla correcta
                 CASE
                     WHEN r.tipo_opcion = 'Salon' THEN s.url_imagen
                     WHEN r.tipo_opcion = 'Decoracion' THEN d.url_imagen
@@ -353,71 +261,50 @@ app.get('/perfil-completo/:id', async (req, res) => {
                     WHEN r.tipo_opcion = 'Fotografo' THEN f.url_imagen
                     WHEN r.tipo_opcion = 'Planeador' THEN p.url_imagen
                 END AS url_imagen
-            FROM 
-                Reserva r
+            FROM Reserva r
             LEFT JOIN Salon s ON r.fk_opcion_id = s.id_salon AND r.tipo_opcion = 'Salon'
             LEFT JOIN Decoraciones d ON r.fk_opcion_id = d.id_decoracion AND r.tipo_opcion = 'Decoracion'
             LEFT JOIN Catering c ON r.fk_opcion_id = c.id_catering AND r.tipo_opcion = 'Catering'
             LEFT JOIN Fotografo f ON r.fk_opcion_id = f.id_fotografo AND r.tipo_opcion = 'Fotografo'
             LEFT JOIN Planeador p ON r.fk_opcion_id = p.id_planeador AND r.tipo_opcion = 'Planeador'
-            WHERE 
-                r.fk_cuentapareja_id = $1
-            ORDER BY 
-                r.id_reserva DESC;
+            WHERE r.fk_cuentapareja_id = $1
+            ORDER BY r.id_reserva DESC;
         `;
         
         const itemsRes = await pool.query(itemsQuery, [idCuentaPareja]);
-        const itemsGuardados = itemsRes.rows;
 
-        // 5. Enviar todo el paquete de datos al frontend
         res.json({
             success: true,
-            miPerfil: {
-                nombre: miNombre,
-                // (Los datos del proyecto ahora están en la sección 'cuenta')
-            },
+            miPerfil: { nombre: miPerfil.nombre_completo },
             cuenta: {
                 presupuesto: miCuenta.presupuesto_estimado,
                 codigo: miCuenta.codigodepareja,
                 fechaBoda: miCuenta.fecha_boda
             },
             pareja: nombrePareja,
-            items: itemsGuardados // Reemplaza 'imagenes' con 'items'
+            items: itemsRes.rows
         });
 
     } catch (error) {
         console.error('Error en perfil:', error);
-        res.status(500).json({ success: false, message: 'Error al cargar perfil' });
+        res.status(500).json({ success: false, message: 'Error interno' });
     }
 });
 
-// --- NUEVA RUTA: Obtener solo la info del Header ---
-// (Esta ruta faltaba en la migración y la necesita 'principal.html')
-
+// ==================================================================
+// 4. RUTA HEADER INFO (Usada en Principal.html)
+// ==================================================================
 app.get('/header-info/:id', async (req, res) => {
     const idUsuario = req.params.id;
-
     try {
-        // 1. Buscar al usuario para obtener su nombre y el ID de la cuenta
         const userQuery = 'SELECT nombre_completo, fk_cuentapareja_id FROM Usuario WHERE id_usuario = $1';
         const userRes = await pool.query(userQuery, [idUsuario]);
-        
-        if (userRes.rows.length === 0) {
-            return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
-        }
+        if (userRes.rows.length === 0) return res.status(404).json({ success: false });
         
         const usuario = userRes.rows[0];
-        const idCuentaPareja = usuario.fk_cuentapareja_id;
-
-        // 2. Buscar el presupuesto en la CuentaPareja
         const cuentaQuery = 'SELECT presupuesto_estimado FROM CuentaPareja WHERE id_cuentapareja = $1';
-        const cuentaRes = await pool.query(cuentaQuery, [idCuentaPareja]);
+        const cuentaRes = await pool.query(cuentaQuery, [usuario.fk_cuentapareja_id]);
 
-        if (cuentaRes.rows.length === 0) {
-             return res.status(404).json({ success: false, message: 'Cuenta no encontrada' });
-        }
-
-        // 3. Devolver los datos EXACTAMENTE como los espera el HTML
         res.json({ 
             success: true, 
             usuario: {
@@ -425,51 +312,172 @@ app.get('/header-info/:id', async (req, res) => {
                 presupuesto_estimado: cuentaRes.rows[0].presupuesto_estimado
             } 
         });
-
     } catch (error) {
-        console.error('Error en /header-info:', error);
-        res.status(500).json({ success: false, message: 'Error interno' });
-    }
-});
-
-// --- ELIMINAR IMAGEN ---
-app.post('/eliminar-imagen', async (req, res) => {
-    const { id_imagen } = req.body;
-    try {
-        await pool.query('DELETE FROM imagenes_guardadas WHERE id_imagen = $1', [id_imagen]);
-        res.json({ success: true });
-    } catch (error) {
-        console.error(error);
         res.status(500).json({ success: false });
     }
 });
-//----NUEVA LINEA OJO--
-// --- NUEVA RUTA: ELIMINAR RESERVA (REEMPLAZA A /eliminar-imagen) ---
 
-app.post('/eliminar-reserva', async (req, res) => {
-    // El frontend nos envía el id_reserva
-    const { id_reserva } = req.body; 
+// ==================================================================
+// 5. RUTA CATÁLOGO PODEROSA (Con Filtros de Color, Fecha, Dpto y Capacidad) ---
+// --- RUTA CATÁLOGO (CORREGIDA PARA TRAER TODOS LOS DETALLES) ---
+app.get('/catalogo-personalizado/:idUsuario', async (req, res) => {
+    const { idUsuario } = req.params;
+    const { fecha, dpto, capacidad } = req.query; 
 
-    if (!id_reserva) {
-        return res.status(400).json({ success: false, message: 'Falta ID de reserva.' });
-    }
-    
     try {
-        // DELETE en la nueva tabla 'Reserva'
-        const result = await pool.query('DELETE FROM Reserva WHERE id_reserva = $1', [id_reserva]);
-        
-        if (result.rowCount === 0) {
-             return res.status(404).json({ success: false, message: 'Reserva no encontrada.' });
+        // 1. Obtener colores
+        const userQuery = `
+            SELECT c.colores_asociados 
+            FROM Usuario u
+            JOIN CuentaPareja cp ON u.fk_cuentapareja_id = cp.id_cuentapareja
+            JOIN Catalogo c ON cp.fk_catalogo_id = c.id_catalogo
+            WHERE u.id_usuario = $1
+        `;
+        const userRes = await pool.query(userQuery, [idUsuario]);
+        let coloresArray = [];
+        if (userRes.rows.length > 0 && userRes.rows[0].colores_asociados) {
+            coloresArray = userRes.rows[0].colores_asociados.split(',');
         }
+
+        // Filtro Departamento común
+        let filtroDptoSQL = "";
+        let paramsDpto = [];
+        if (dpto && dpto !== "") {
+            filtroDptoSQL = " AND departamento = $2 ";
+            paramsDpto = [dpto];
+        }
+
+        // --- A. DECORACIONES (Agregamos 'descripcion') ---
+        const decorQuery = `
+            SELECT id_decoracion as id, nombre_item, costo_base, departamento, 
+                   url_imagen, color, regla_pago_meses, descripcion, 'Decoracion' as tipo 
+            FROM Decoraciones
+            WHERE (color = ANY($1) OR color IS NULL)
+            ${filtroDptoSQL}
+        `;
+        const decorRes = await pool.query(decorQuery, [coloresArray, ...paramsDpto]);
+
+        // --- B. SALONES (Agregamos 'incluye_mesas', 'incluye_cubiertos', 'descripcion') ---
+        let salonQueryText = `
+            SELECT id_salon as id, nombre_lugar as nombre_item, costo_base, departamento, 
+                   capacidad, url_imagen, regla_pago_meses, incluye_mesas, incluye_cubiertos, 
+                   'Descripción del lugar' as descripcion, -- Si no tienes columna descripcion en Salon, usa texto fijo o agrégala
+                   'Salon' as tipo 
+            FROM Salon
+            WHERE 1=1 
+        `;
         
-        res.json({ success: true, message: 'Reserva eliminada' });
-        
+        let salonParams = [];
+        let paramCounter = 1;
+
+        if (dpto && dpto !== "") {
+            salonQueryText += ` AND departamento = $${paramCounter} `;
+            salonParams.push(dpto);
+            paramCounter++;
+        }
+        if (capacidad) {
+            salonQueryText += ` AND capacidad >= $${paramCounter} `;
+            salonParams.push(capacidad);
+            paramCounter++;
+        }
+        if (fecha) {
+            salonQueryText += `
+                AND id_salon NOT IN (
+                    SELECT fk_opcion_id FROM Reserva r
+                    JOIN CuentaPareja cp ON r.fk_cuentapareja_id = cp.id_cuentapareja
+                    WHERE r.tipo_opcion = 'Salon' AND cp.fecha_boda = $${paramCounter} AND r.estado_pago != 'Cancelado'
+                )
+            `;
+            salonParams.push(fecha);
+            paramCounter++;
+        }
+
+        const salonRes = await pool.query(salonQueryText, salonParams);
+
+        // --- C. OTROS (Catering, etc - Agregamos descripcion) ---
+        const otrosParams = (dpto && dpto !== "") ? [dpto] : [];
+        const clauseDptoOtros = (dpto && dpto !== "") ? " WHERE departamento = $1 " : "";
+
+        const catQuery = `SELECT id_catering as id, nombre_servicio as nombre_item, costo_base, departamento, url_imagen, regla_pago_meses, descripcion, 'Catering' as tipo FROM Catering ${clauseDptoOtros}`;
+        const fotoQuery = `SELECT id_fotografo as id, nombre_servicio as nombre_item, costo_base, departamento, url_imagen, regla_pago_meses, descripcion, 'Fotografo' as tipo FROM Fotografo ${clauseDptoOtros}`;
+        const planQuery = `SELECT id_planeador as id, nombre_servicio as nombre_item, costo_base, departamento, url_imagen, regla_pago_meses, descripcion, 'Planeador' as tipo FROM Planeador ${clauseDptoOtros}`;
+
+        const catRes = await pool.query(catQuery, otrosParams);
+        const fotoRes = await pool.query(fotoQuery, otrosParams);
+        const planRes = await pool.query(planQuery, otrosParams);
+
+        // UNIR TODO
+        const productos = [
+            ...decorRes.rows, ...salonRes.rows, ...catRes.rows, ...fotoRes.rows, ...planRes.rows
+        ];
+        const productosBarajados = productos.sort(() => 0.5 - Math.random());
+
+        res.json({ success: true, productos: productosBarajados });
+
     } catch (error) {
-        console.error('Error al eliminar reserva:', error);
-        res.status(500).json({ success: false, message: 'Error interno al eliminar.' });
+        console.error('Error catálogo:', error);
+        res.status(500).json({ success: false });
     }
 });
+
+// ==================================================================
+// 6. RUTA CREAR RESERVA (Reemplaza guardar-imagen)
+// ==================================================================
+app.post('/crear-reserva', async (req, res) => {
+    const { id_usuario, id_opcion, tipo_opcion, monto_total, regla_pago_meses } = req.body;
+
+    if (!id_usuario || !id_opcion) {
+        return res.status(400).json({ success: false, message: 'Datos incompletos.' });
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        const userRes = await client.query('SELECT fk_cuentapareja_id FROM Usuario WHERE id_usuario = $1', [id_usuario]);
+        const idCuentaPareja = userRes.rows[0].fk_cuentapareja_id;
+
+        let fechaLimite = null;
+        if (regla_pago_meses) {
+            fechaLimite = new Date();
+            fechaLimite.setMonth(fechaLimite.getMonth() + parseInt(regla_pago_meses));
+        }
+
+        const query = `
+            INSERT INTO Reserva 
+                (fk_cuentapareja_id, fk_opcion_id, tipo_opcion, cantidad, monto_total, estado_pago, fecha_limite_pago)
+            VALUES 
+                ($1, $2, $3, 1, $4, 'Pendiente', $5)
+            RETURNING id_reserva`;
+        
+        await client.query(query, [idCuentaPareja, id_opcion, tipo_opcion, monto_total, fechaLimite]);
+        
+        await client.query('COMMIT');
+        res.status(201).json({ success: true, message: '¡Guardado!' });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Error al guardar.' });
+    } finally {
+        client.release();
+    }
+});
+
+// ==================================================================
+// 7. RUTA ELIMINAR RESERVA
+// ==================================================================
+app.post('/eliminar-reserva', async (req, res) => {
+    const { id_reserva } = req.body; 
+    try {
+        const result = await pool.query('DELETE FROM Reserva WHERE id_reserva = $1', [id_reserva]);
+        if (result.rowCount === 0) return res.status(404).json({ success: false });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
 app.listen(port, () => {
     console.log(`Servidor escuchando en http://localhost:${port}`);
 });
-app.use(express.static('boda'));
