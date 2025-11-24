@@ -319,21 +319,29 @@ app.get('/header-info/:id', async (req, res) => {
 
 // ==================================================================
 // 5. RUTA CATÁLOGO PODEROSA (Con Filtros de Color, Fecha, Dpto y Capacidad) ---
-// --- RUTA CATÁLOGO (CORREGIDA PARA TRAER TODOS LOS DETALLES) ---
-// --- NUEVA RUTA: ACTUALIZAR PRESUPUESTO (Para hacerlo editable) ---
+// --- A. RUTA PARA GUARDAR PRESUPUESTO (CORREGIDA CON LOGS) ---
 app.post('/actualizar-presupuesto', async (req, res) => {
     const { idUsuario, nuevoPresupuesto } = req.body;
+    console.log(`--> SOLICITUD DE ACTUALIZACIÓN: Usuario ${idUsuario} a Presupuesto ${nuevoPresupuesto}`);
 
     try {
-        // 1. Buscar la cuenta de la pareja del usuario
+        // 1. Buscar la cuenta
         const userRes = await pool.query('SELECT fk_cuentapareja_id FROM Usuario WHERE id_usuario = $1', [idUsuario]);
-        if (userRes.rows.length === 0) return res.status(404).json({ success: false });
+        
+        if (userRes.rows.length === 0) {
+            console.log("Error: Usuario no encontrado");
+            return res.status(404).json({ success: false });
+        }
         
         const idCuenta = userRes.rows[0].fk_cuentapareja_id;
 
-        // 2. Actualizar el presupuesto en la tabla CuentaPareja
-        await pool.query('UPDATE CuentaPareja SET presupuesto_estimado = $1 WHERE id_cuentapareja = $2', [nuevoPresupuesto, idCuenta]);
+        // 2. ACTUALIZAR (Asegurando que sea numérico)
+        await pool.query(
+            'UPDATE CuentaPareja SET presupuesto_estimado = $1 WHERE id_cuentapareja = $2', 
+            [parseFloat(nuevoPresupuesto), idCuenta]
+        );
 
+        console.log(`--> ÉXITO: Cuenta ${idCuenta} actualizada a ${nuevoPresupuesto}`);
         res.json({ success: true, message: 'Presupuesto actualizado' });
 
     } catch (error) {
@@ -342,22 +350,29 @@ app.post('/actualizar-presupuesto', async (req, res) => {
     }
 });
 
-// --- RUTA CATÁLOGO (AJUSTADA Y ROBUSTA) ---
-// --- RUTA CATÁLOGO (FILTRO ESTRICTO) ---
+// --- B. RUTA CATÁLOGO (FILTRO ESTRICTO SIN EXCEPCIONES) ---
 app.get('/catalogo-personalizado/:idUsuario', async (req, res) => {
     const { idUsuario } = req.params;
     const { fecha, dpto, capacidad, presupuesto } = req.query; 
 
+    console.log(`--> FILTRANDO CATÁLOGO para Usuario ${idUsuario}. Presupuesto Filtro: ${presupuesto}`);
+
     try {
         // 1. Obtener colores
-        const userQuery = `SELECT c.colores_asociados FROM Usuario u JOIN CuentaPareja cp ON u.fk_cuentapareja_id = cp.id_cuentapareja JOIN Catalogo c ON cp.fk_catalogo_id = c.id_catalogo WHERE u.id_usuario = $1`;
+        const userQuery = `
+            SELECT c.colores_asociados 
+            FROM Usuario u
+            JOIN CuentaPareja cp ON u.fk_cuentapareja_id = cp.id_cuentapareja
+            JOIN Catalogo c ON cp.fk_catalogo_id = c.id_catalogo
+            WHERE u.id_usuario = $1
+        `;
         const userRes = await pool.query(userQuery, [idUsuario]);
         let coloresArray = [];
         if (userRes.rows.length > 0 && userRes.rows[0].colores_asociados) {
             coloresArray = userRes.rows[0].colores_asociados.split(',');
         }
 
-        // 2. Construir filtros
+        // --- CONSTRUCTOR DE FILTROS ---
         const construirFiltros = (indiceInicio) => {
             let sql = "";
             let params = [];
@@ -368,24 +383,40 @@ app.get('/catalogo-personalizado/:idUsuario', async (req, res) => {
                 params.push(dpto);
                 idx++;
             }
-            // CORRECCIÓN: Filtro estricto. Si hay presupuesto, debe ser menor o igual.
+
+            // *** FILTRO DE PRECIO ESTRICTO ***
+            // Si llega un presupuesto, filtramos TODO lo que sea mayor.
             if (presupuesto && presupuesto > 0) {
                 sql += ` AND costo_base <= $${idx}::numeric `;
                 params.push(presupuesto);
                 idx++;
             }
+            
             return { sql, params, nextIdx: idx };
         };
 
-        // Consultas (Decoracion, Salon, Otros...)
+        // --- CONSULTAS ---
+        
         // A. DECORACIONES
         const filtrosDecor = construirFiltros(2);
-        const decorQuery = `SELECT id_decoracion as id, nombre_item, costo_base, departamento, url_imagen, color, regla_pago_meses, 'Decoracion' as tipo FROM Decoraciones WHERE (color = ANY($1) OR color IS NULL) ${filtrosDecor.sql}`;
+        const decorQuery = `
+            SELECT id_decoracion as id, nombre_item, costo_base, departamento, 
+                   url_imagen, color, regla_pago_meses, descripcion, 'Decoracion' as tipo 
+            FROM Decoraciones
+            WHERE (color = ANY($1) OR color IS NULL)
+            ${filtrosDecor.sql}
+        `;
         const decorRes = await pool.query(decorQuery, [coloresArray, ...filtrosDecor.params]);
 
         // B. SALONES
         let salonFiltros = construirFiltros(1);
-        let salonQueryText = `SELECT id_salon as id, nombre_lugar as nombre_item, costo_base, departamento, capacidad, url_imagen, regla_pago_meses, incluye_mesas, incluye_cubiertos, 'Salon' as tipo FROM Salon WHERE 1=1 ${salonFiltros.sql}`;
+        let salonQueryText = `
+            SELECT id_salon as id, nombre_lugar as nombre_item, costo_base, departamento, 
+                   capacidad, url_imagen, regla_pago_meses, incluye_mesas, incluye_cubiertos, 
+                   'Descripción del lugar' as descripcion, 'Salon' as tipo 
+            FROM Salon
+            WHERE 1=1 ${salonFiltros.sql}
+        `;
         let salonParams = [...salonFiltros.params];
         let salonIdx = salonFiltros.nextIdx;
 
@@ -395,7 +426,14 @@ app.get('/catalogo-personalizado/:idUsuario', async (req, res) => {
             salonIdx++;
         }
         if (fecha) {
-            salonQueryText += ` AND id_salon NOT IN (SELECT fk_opcion_id FROM Reserva r JOIN CuentaPareja cp ON r.fk_cuentapareja_id = cp.id_cuentapareja WHERE r.tipo_opcion = 'Salon' AND cp.fecha_boda = $${salonIdx} AND r.estado_pago != 'Cancelado') `;
+            // Subconsulta de disponibilidad
+            salonQueryText += `
+                AND id_salon NOT IN (
+                    SELECT fk_opcion_id FROM Reserva r
+                    JOIN CuentaPareja cp ON r.fk_cuentapareja_id = cp.id_cuentapareja
+                    WHERE r.tipo_opcion = 'Salon' AND cp.fecha_boda = $${salonIdx} AND r.estado_pago != 'Cancelado'
+                )
+            `;
             salonParams.push(fecha);
         }
         const salonRes = await pool.query(salonQueryText, salonParams);
@@ -404,15 +442,18 @@ app.get('/catalogo-personalizado/:idUsuario', async (req, res) => {
         const otrosFiltros = construirFiltros(1);
         const otrosClause = ` WHERE 1=1 ${otrosFiltros.sql} `;
         
-        const catQuery = `SELECT id_catering as id, nombre_servicio as nombre_item, costo_base, departamento, url_imagen, regla_pago_meses, 'Catering' as tipo FROM Catering ${otrosClause}`;
-        const fotoQuery = `SELECT id_fotografo as id, nombre_servicio as nombre_item, costo_base, departamento, url_imagen, regla_pago_meses, 'Fotografo' as tipo FROM Fotografo ${otrosClause}`;
-        const planQuery = `SELECT id_planeador as id, nombre_servicio as nombre_item, costo_base, departamento, url_imagen, regla_pago_meses, 'Planeador' as tipo FROM Planeador ${otrosClause}`;
+        const catQuery = `SELECT id_catering as id, nombre_servicio as nombre_item, costo_base, departamento, url_imagen, regla_pago_meses, descripcion, 'Catering' as tipo FROM Catering ${otrosClause}`;
+        const fotoQuery = `SELECT id_fotografo as id, nombre_servicio as nombre_item, costo_base, departamento, url_imagen, regla_pago_meses, descripcion, 'Fotografo' as tipo FROM Fotografo ${otrosClause}`;
+        const planQuery = `SELECT id_planeador as id, nombre_servicio as nombre_item, costo_base, departamento, url_imagen, regla_pago_meses, descripcion, 'Planeador' as tipo FROM Planeador ${otrosClause}`;
 
         const catRes = await pool.query(catQuery, otrosFiltros.params);
         const fotoRes = await pool.query(fotoQuery, otrosFiltros.params);
         const planRes = await pool.query(planQuery, otrosFiltros.params);
 
-        const productos = [...decorRes.rows, ...salonRes.rows, ...catRes.rows, ...fotoRes.rows, ...planRes.rows];
+        const productos = [
+            ...decorRes.rows, ...salonRes.rows, ...catRes.rows, ...fotoRes.rows, ...planRes.rows
+        ];
+
         res.json({ success: true, productos: productos.sort(() => 0.5 - Math.random()) });
 
     } catch (error) {
@@ -420,7 +461,6 @@ app.get('/catalogo-personalizado/:idUsuario', async (req, res) => {
         res.status(500).json({ success: false });
     }
 });
-
 // ==================================================================
 // 6. RUTA CREAR RESERVA (Reemplaza guardar-imagen)
 // ==================================================================
@@ -562,74 +602,96 @@ app.post('/admin/login', async (req, res) => {
     }
 });
 // ==================================================================
-// 8. RUTA DE REPORTES AVANZADOS (ADMIN)
+// ==================================================================
+// 8. RUTA DE REPORTES AVANZADOS (ACTUALIZADA)
 // ==================================================================
 app.get('/admin/reportes/:tipo', async (req, res) => {
     const { tipo } = req.params;
+    const { servicio } = req.query; // Para filtrar por 'Salon', 'Decoracion', etc.
 
     try {
         let query = '';
+        let params = [];
         
         switch (tipo) {
-            case 'usuarios-mes':
-                // Cuenta cuántas Cuentas de Pareja se crearon por mes
-                // (PostgreSQL usa to_char para formatear fechas)
+            // 1. USUARIOS: Crecimiento por mes (Fecha de Creación)
+            case 'usuarios-crecimiento':
                 query = `
-                    SELECT to_char(fecha_creacion, 'Month YYYY') as etiqueta, COUNT(*) as valor
+                    SELECT to_char(fecha_creacion, 'Month') as etiqueta, COUNT(*) as valor
                     FROM CuentaPareja
-                    GROUP BY to_char(fecha_creacion, 'Month YYYY'), date_part('month', fecha_creacion)
+                    GROUP BY to_char(fecha_creacion, 'Month'), date_part('month', fecha_creacion)
                     ORDER BY date_part('month', fecha_creacion) ASC
                 `;
                 break;
 
-            case 'top-salon':
-                // Cuenta cuántas reservas tiene cada Salón
+            // 2. USUARIOS: Distribución de Presupuesto (Rangos)
+            case 'usuarios-presupuesto':
                 query = `
-                    SELECT s.nombre_lugar as etiqueta, COUNT(r.id_reserva) as valor
-                    FROM Reserva r
-                    JOIN Salon s ON r.fk_opcion_id = s.id_salon
-                    WHERE r.tipo_opcion = 'Salon' AND r.estado_pago != 'Cancelado'
-                    GROUP BY s.nombre_lugar
+                    SELECT 
+                        CASE 
+                            WHEN presupuesto_estimado < 5000 THEN 'Bajo (< 5k)'
+                            WHEN presupuesto_estimado BETWEEN 5000 AND 15000 THEN 'Medio (5k - 15k)'
+                            WHEN presupuesto_estimado BETWEEN 15001 AND 30000 THEN 'Alto (15k - 30k)'
+                            ELSE 'Premium (> 30k)'
+                        END as etiqueta,
+                        COUNT(*) as valor
+                    FROM CuentaPareja
+                    GROUP BY etiqueta
                     ORDER BY valor DESC
-                    LIMIT 5
                 `;
                 break;
 
-            case 'top-fotografo':
-                // Cuenta reservas por Fotógrafo
+            // 3. SERVICIOS: Demanda por Mes (Basado en Fecha de Boda)
+            // Sirve para las 5 tablas: Salon, Decoracion, Catering, Fotografo, Planeador
+            case 'demanda-mes':
+                if (!servicio) return res.status(400).json({ error: 'Falta parametro servicio' });
+                
                 query = `
-                    SELECT f.nombre_servicio as etiqueta, COUNT(r.id_reserva) as valor
+                    SELECT to_char(cp.fecha_boda, 'Month') as etiqueta, COUNT(r.id_reserva) as valor
                     FROM Reserva r
-                    JOIN Fotografo f ON r.fk_opcion_id = f.id_fotografo
-                    WHERE r.tipo_opcion = 'Fotografo' AND r.estado_pago != 'Cancelado'
-                    GROUP BY f.nombre_servicio
-                    ORDER BY valor DESC
-                    LIMIT 5
+                    JOIN CuentaPareja cp ON r.fk_cuentapareja_id = cp.id_cuentapareja
+                    WHERE r.tipo_opcion = $1 AND r.estado_pago != 'Cancelado' AND cp.fecha_boda IS NOT NULL
+                    GROUP BY to_char(cp.fecha_boda, 'Month'), date_part('month', cp.fecha_boda)
+                    ORDER BY date_part('month', cp.fecha_boda) ASC
                 `;
+                params = [servicio];
                 break;
-            
-            case 'top-catering':
-                 // Cuenta reservas por Catering
-                 query = `
-                    SELECT c.nombre_servicio as etiqueta, COUNT(r.id_reserva) as valor
+
+            // 4. TOP DE CADA CATEGORÍA (Lo que ya tenías, optimizado)
+            case 'top-items':
+                if (!servicio) return res.status(400).json({ error: 'Falta parametro servicio' });
+                
+                // Lógica dinámica para saber qué tabla unir
+                let tabla = '';
+                let campoNombre = '';
+                let idCampo = '';
+
+                if (servicio === 'Salon') { tabla = 'Salon'; campoNombre = 'nombre_lugar'; idCampo = 'id_salon'; }
+                else if (servicio === 'Decoracion') { tabla = 'Decoraciones'; campoNombre = 'nombre_item'; idCampo = 'id_decoracion'; }
+                else if (servicio === 'Catering') { tabla = 'Catering'; campoNombre = 'nombre_servicio'; idCampo = 'id_catering'; }
+                else if (servicio === 'Fotografo') { tabla = 'Fotografo'; campoNombre = 'nombre_servicio'; idCampo = 'id_fotografo'; }
+                else if (servicio === 'Planeador') { tabla = 'Planeador'; campoNombre = 'nombre_servicio'; idCampo = 'id_planeador'; }
+
+                query = `
+                    SELECT s.${campoNombre} as etiqueta, COUNT(r.id_reserva) as valor
                     FROM Reserva r
-                    JOIN Catering c ON r.fk_opcion_id = c.id_catering
-                    WHERE r.tipo_opcion = 'Catering' AND r.estado_pago != 'Cancelado'
-                    GROUP BY c.nombre_servicio
+                    JOIN ${tabla} s ON r.fk_opcion_id = s.${idCampo}
+                    WHERE r.tipo_opcion = $1 AND r.estado_pago != 'Cancelado'
+                    GROUP BY s.${campoNombre}
                     ORDER BY valor DESC
                     LIMIT 5
                 `;
+                params = [servicio];
                 break;
 
             default:
                 return res.status(400).json({ error: 'Tipo de reporte no válido' });
         }
 
-        const result = await pool.query(query);
+        const result = await pool.query(query, params);
         
-        // Formateamos para Chart.js (Arrays separados de etiquetas y datos)
         const etiquetas = result.rows.map(row => row.etiqueta.trim());
-        const valores = result.rows.map(row => row.valor);
+        const valores = result.rows.map(row => parseInt(row.valor));
 
         res.json({ etiquetas, valores });
 

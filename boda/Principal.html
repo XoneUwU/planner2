@@ -317,26 +317,44 @@
     let productosMostrados = 0;
 
     // --- 1. AL CARGAR LA PÁGINA ---
+    // --- 1. AL CARGAR LA PÁGINA (CORREGIDO) ---
     window.addEventListener('DOMContentLoaded', async () => {
         const idUsuario = localStorage.getItem('usuarioId');
+        
         if (!idUsuario) {
             window.location.href = 'Login.html';
             return;
         }
 
-        // A. Header
+        let presupuestoInicial = null; // Variable temporal
+
+        // A. Cargar Info del Header y Presupuesto Guardado
         try {
             const response = await fetch(`http://localhost:3000/header-info/${idUsuario}`);
             const data = await response.json();
-            if (data.success) {
-                let presupuesto = parseFloat(data.usuario.presupuesto_estimado).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
-                document.getElementById('userName').textContent = data.usuario.nombre;
-                document.getElementById('userBudget').textContent = `Presupuesto: ${presupuesto}`;
-            }
-        } catch (error) { console.error("Error cargando header:", error); }
 
-        // B. Catálogo
-        await loadInitialImages(idUsuario);
+            if (data.success) {
+                // 1. Mostrar datos visuales
+                const presRaw = data.usuario.presupuesto_estimado;
+                let presVisual = parseFloat(presRaw).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
+                
+                document.getElementById('userName').textContent = data.usuario.nombre;
+                document.getElementById('userBudget').textContent = `Presupuesto: ${presVisual}`;
+                
+                // 2. Llenar el input del sidebar
+                document.getElementById('filterPresupuesto').value = presRaw;
+                
+                // 3. Guardar el valor para usarlo en el filtro inmediatamente
+                presupuestoInicial = presRaw;
+            }
+        } catch (error) { 
+            console.error("Error cargando header:", error); 
+        }
+
+        // B. Cargar el Catálogo (ENVIANDO EL PRESUPUESTO RECUPERADO)
+        // Si 'presupuestoInicial' es null, enviará undefined (comportamiento normal si es cuenta nueva)
+        // Si tiene valor (ej. 25000), lo enviará y el servidor filtrará.
+        await loadInitialImages(idUsuario, { presupuesto: presupuestoInicial });
     });
 
     // --- 1. AL CARGAR LA PÁGINA (Pre-llenar presupuesto) ---
@@ -437,46 +455,39 @@
     }
 
     // --- 3. BOTÓN APLICAR (Leer el input) ---
+// --- FUNCIÓN APLICAR FILTROS (CORREGIDA) ---
     async function aplicarFiltros() {
         const idUsuario = localStorage.getItem('usuarioId');
         const dpto = document.getElementById('filterDpto').value;
         const cap = document.getElementById('filterCap').value;
         const fecha = document.getElementById('filterDate').value;
+        
+        // Capturamos el valor actual del input
         const pres = document.getElementById('filterPresupuesto').value;
         
-        // 1. GUARDAR PRESUPUESTO (Esperamos a que termine con 'await')
+        // 1. GUARDAR EN BD
         if (pres) {
             try {
-                const saveRes = await fetch('http://localhost:3000/actualizar-presupuesto', {
+                await fetch('http://localhost:3000/actualizar-presupuesto', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ idUsuario: idUsuario, nuevoPresupuesto: pres })
                 });
                 
-                if(saveRes.ok) {
-                    // Actualizar visualmente el header
-                    const presFormat = parseFloat(pres).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
-                    document.getElementById('userBudget').textContent = `Presupuesto: ${presFormat}`;
-                }
+                // Actualizar visualmente el texto de arriba
+                const presFormat = parseFloat(pres).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
+                document.getElementById('userBudget').textContent = `Presupuesto: ${presFormat}`;
             } catch (e) { console.error("Error guardando:", e); }
         }
 
-        // 2. FILTRAR (Enviamos el nuevo presupuesto explícitamente)
+        // 2. RECARGAR CATÁLOGO (Enviando explícitamente 'pres')
+        // Esto enviará ?presupuesto=25000 al backend
         loadInitialImages(idUsuario, { 
             fecha: fecha, 
             dpto: dpto, 
             capacidad: cap,
             presupuesto: pres 
         });
-    }
-
-    function aplicarFiltros() {
-        const idUsuario = localStorage.getItem('usuarioId');
-        const dpto = document.getElementById('filterDpto').value;
-        const cap = document.getElementById('filterCap').value;
-        const fecha = document.getElementById('filterDate').value;
-        
-        loadInitialImages(idUsuario, { fecha, dpto, capacidad: cap });
     }
 
     // --- 3. PINTAR IMÁGENES ---

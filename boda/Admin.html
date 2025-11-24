@@ -33,21 +33,21 @@
 
     <div class="sidebar">
         <h2>ADMIN PANEL</h2>
-        <div class="menu-item active">📊 Dashboard</div>
+        <div class="menu-item active">📊 Dashboard General</div>
         <div class="menu-item" onclick="location.href='Principal.html'">👀 Ver Sitio Web</div>
         <div class="menu-item" style="margin-top: auto; background: #c0392b;" onclick="location.href='Login.html'">Cerrar Sesión</div>
     </div>
 
     <div class="content">
-        <h1 style="margin-top:0;">Resumen General</h1>
+        <h1 style="margin-top:0; color: #2c3e50;">Dashboard de Inteligencia de Negocios</h1>
         
         <div class="card-grid">
             <div class="card">
-                <h3>Usuarios Registrados</h3>
+                <h3>Usuarios Totales</h3>
                 <p id="totalUsers">-</p>
             </div>
             <div class="card">
-                <h3>Parejas Creadas</h3>
+                <h3>Cuentas Pareja</h3>
                 <p id="totalCuentas">-</p>
             </div>
             <div class="card">
@@ -56,61 +56,53 @@
             </div>
         </div>
 
+        <hr style="border: 0; border-top: 1px solid #ddd; margin: 40px 0;">
+
+        <h2 style="color: #34495e;">📈 Análisis de Usuarios</h2>
         <div class="charts-grid">
-            <div class="chart-container" style="grid-column: 1 / -1;"> <h4>📈 Crecimiento de Parejas (Por Mes)</h4>
-                <canvas id="chartMeses" height="80"></canvas>
-            </div>
-
             <div class="chart-container">
-                <h4>🏆 Salones Más Reservados</h4>
-                <canvas id="chartSalones"></canvas>
+                <h4>Registro de Usuarios (Por Mes)</h4>
+                <canvas id="chartUserCrecimiento"></canvas>
             </div>
-
             <div class="chart-container">
-                <h4>📸 Fotógrafos Populares</h4>
-                <canvas id="chartFotos"></canvas>
+                <h4>💰 Poder Adquisitivo (Presupuesto)</h4>
+                <canvas id="chartPresupuesto"></canvas>
             </div>
         </div>
+
+        <hr style="border: 0; border-top: 1px solid #ddd; margin: 40px 0;">
+
+        <h2 style="color: #34495e;">🏆 Rendimiento por Servicio</h2>
+        
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h4>🏛️ Demanda de Salones (Mes de Boda)</h4>
+                <canvas id="chartMesSalon"></canvas>
+            </div>
+            <div class="chart-container">
+                <h4>🌸 Decoraciones Más Populares</h4>
+                <canvas id="chartTopDecoracion"></canvas>
+            </div>
+        </div>
+
+        <div class="charts-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 30px;">
+            <div class="chart-container">
+                <h4>📸 Fotógrafos (Mes Demanda)</h4>
+                <canvas id="chartMesFoto"></canvas>
+            </div>
+            <div class="chart-container">
+                <h4>🍽️ Catering (Top 5)</h4>
+                <canvas id="chartTopCatering"></canvas>
+            </div>
+            <div class="chart-container">
+                <h4>📋 Planners (Mes Demanda)</h4>
+                <canvas id="chartMesPlanner"></canvas>
+            </div>
+        </div>
+
     </div>
 
     <script>
-        // 1. Cargar Estadísticas Numéricas (Cards)
-        fetch('http://localhost:3000/admin/stats')
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('totalUsers').textContent = data.usuarios;
-                document.getElementById('totalCuentas').textContent = data.cuentas;
-                document.getElementById('totalReservas').textContent = data.reservas;
-            });
-
-        // 2. Función para dibujar gráficos
-        async function cargarGrafico(tipo, canvasId, tipoGrafico, label, color) {
-            const res = await fetch(`http://localhost:3000/admin/reportes/${tipo}`);
-            const data = await res.json();
-
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            new Chart(ctx, {
-                type: tipoGrafico, // 'bar', 'line', 'pie'
-                data: {
-                    labels: data.etiquetas,
-                    datasets: [{
-                        label: label,
-                        data: data.valores,
-                        backgroundColor: color,
-                        borderColor: color,
-                        borderWidth: 1
-                    }]
-                },
-                options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-            });
-        }
-
-        // 3. Ejecutar la carga de reportes
-        // Colorcitos: Azul (#3498db), Verde (#2ecc71), Morado (#9b59b6)
-        cargarGrafico('usuarios-mes', 'chartMeses', 'line', 'Nuevas Parejas', '#3498db');
-        cargarGrafico('top-salon', 'chartSalones', 'bar', 'Reservas de Salón', '#2ecc71');
-        cargarGrafico('top-fotografo', 'chartFotos', 'bar', 'Reservas de Fotógrafo', '#9b59b6');
-
-    </script>
-</body>
+        // --- A. CARGAR NÚMEROS ---
+        fetch('http://localhost:3000/admin/stats
 </html>
