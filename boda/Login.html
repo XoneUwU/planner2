@@ -3,86 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Ingeniería de Software 2</title>
+    <title>Login - Wedding Planner</title>
     <style>
+        /* (Tus estilos anteriores se mantienen igual) */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            /* Quitamos el background de color sólido */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            position: relative; /* Necesario para posicionar el fondo */
-            overflow: hidden;   /* Evita barras de scroll si el blur se sale un poco */
-        }
-
-        /* --- CAPA DEL FONDO (IMAGEN + BLUR) --- */
-        body::before {
-            content: "";
-            position: fixed; /* Se queda fijo en la pantalla */
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1; /* Se pone DETRÁS del contenido */
-
-            /* --- TU IMAGEN --- */
-            /* Asegúrate de cambiar la ruta a tu imagen real */
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0;
             background-image: url('img/fondo-boda.jpg'); 
-            background-size: cover;      /* Cubre toda la pantalla */
-            background-position: center; /* Centra la imagen */
-            background-repeat: no-repeat;
-
-            /* --- EL EFECTO BLUR --- */
-            filter: blur(1.5px); /* Cambia 8px para más o menos borroso */
-            
-            /* Truco Pro: Aumentamos un poco el tamaño para evitar bordes blancos difuminados */
-            transform: scale(1.1); 
+            background-size: cover; background-position: center;
+        }
+        /* Capa oscura para leer mejor */
+        body::before {
+            content: ""; position: absolute; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.4); z-index:-1; backdrop-filter: blur(3px);
         }
 
-        /* Opcional: Una capa oscura encima para que el formulario resalte más */
-        body::after {
-            content: "";
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.3); /* Oscurece la imagen un 30% */
-            z-index: -1;
-        }
         .login-container {
-            background: #fff;
-            padding: 40px 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
+            background: #fff; padding: 40px 30px; border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3); width: 100%; max-width: 400px; text-align: center;
         }
         h2 { margin-bottom: 25px; color: #333; }
-        input[type="email"],
-        input[type="password"] {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
+        input[type="email"], input[type="password"] {
+            width: 100%; padding: 10px; margin: 10px 0;
+            border: 1px solid #ccc; border-radius: 5px; font-size: 16px; box-sizing: border-box;
         }
         button {
-            width: 100%;
-            background-color: #1abc9c;
-            color: white;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 10px;
+            width: 100%; background-color: #1abc9c; color: white; padding: 10px;
+            border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-top: 10px;
         }
         button:hover { background-color: #16a085; }
         .link { margin-top: 15px; display: block; font-size: 14px; }
-        .link a { color: #3498db; text-decoration: none; }
-        .link a:hover { text-decoration: underline; }
+        
+        /* Estilo para el Checkbox */
+        .admin-check {
+            display: flex; align-items: center; margin: 10px 0; font-size: 14px; color: #555;
+        }
+        .admin-check input { margin-right: 8px; transform: scale(1.2); }
     </style>
 </head>
 <body>
@@ -93,6 +50,12 @@
         <form id="loginForm">
             <input type="email" id="correo" placeholder="Correo electrónico" required>
             <input type="password" id="contrasena" placeholder="Contraseña" required>
+            
+            <div class="admin-check">
+                <input type="checkbox" id="soyAdmin">
+                <label for="soyAdmin">Soy Administrador</label>
+            </div>
+
             <button type="submit">Entrar</button>
         </form>
         
@@ -102,18 +65,20 @@
         </div>
     </div>
 
-<!-- ============================================= -->
-<!-- === SCRIPT ACTUALIZADO === -->
-<!-- ============================================= -->
 <script>
     document.getElementById('loginForm').addEventListener('submit', async function (event) {
         event.preventDefault();
+        
         const correo = document.getElementById('correo').value;
         const contrasena = document.getElementById('contrasena').value;
+        const esAdmin = document.getElementById('soyAdmin').checked; // Verificar checkbox
         const messageDiv = document.getElementById('message');
 
+        // Decidir URL según el checkbox
+        const url = esAdmin ? 'http://localhost:3000/admin/login' : 'http://localhost:3000/login';
+
         try {
-            const response = await fetch('http://localhost:3000/login', {
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ correo, contrasena }),
@@ -124,13 +89,18 @@
                 messageDiv.style.color = 'green';
                 messageDiv.textContent = "¡Bienvenido!";
                 
-                // --- CAMBIO CLAVE ---
-                // Borramos todo lo anterior y guardamos SOLO el ID
-                localStorage.clear();
-                localStorage.setItem('usuarioId', data.usuario.id);
-                // --- FIN DEL CAMBIO ---
+                localStorage.clear(); // Limpiar sesión anterior
 
-                setTimeout(() => { window.location.href = 'Principal.html'; }, 1000);
+                if (esAdmin) {
+                    // Si es admin, redirigir a su panel
+                    // (Opcional: Guardar token de admin si lo tuvieras)
+                    setTimeout(() => { window.location.href = 'Admin.html'; }, 1000);
+                } else {
+                    // Si es pareja, guardar ID y redirigir al principal
+                    localStorage.setItem('usuarioId', data.usuario.id);
+                    setTimeout(() => { window.location.href = 'Principal.html'; }, 1000);
+                }
+
             } else {
                 messageDiv.style.color = 'red';
                 messageDiv.textContent = data.message;

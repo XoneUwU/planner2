@@ -31,7 +31,7 @@
         /* --- Menú Desplegable --- */
         .menu-dropdown { position: relative; display: inline-block; }
         .menu-btn {
-            background-color: #068238c0;
+            background-color: #06831fc8;
             color: white;
             padding: 10px 15px;
             font-size: 16px;
@@ -59,17 +59,54 @@
         }
         .dropdown-content a:hover { background-color: #ddd; }
         .menu-dropdown:hover .dropdown-content { display: block; }
-        .menu-dropdown:hover .menu-btn { background-color: #0a5b0cd0; }
+        .menu-dropdown:hover .menu-btn { background-color: #064210; }
         
-        /* --- Galería Estilo Pinterest --- */
+        /* --- SIDEBAR DE PREFERENCIAS --- */
         .gallery-container {
             column-count: 4;
             column-gap: 15px;
             padding: 20px;
-            max-width: 1200px;
-            margin: 20px auto;
+            /* Dejamos espacio a la izquierda para el sidebar */
+            margin-left: 260px; 
+            max-width: calc(100% - 280px);
         }
 
+        .sidebar {
+            position: fixed;
+            top: 80px;
+            left: 10px;
+            width: 220px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 900;
+            height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+        .sidebar label { display: block; margin-top: 15px; font-weight: bold; color: #555; font-size: 0.9em; }
+        .sidebar select, .sidebar input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        .btn-filter {
+            width: 100%;
+            background: #06831fc8;
+            color: white;
+            border: none;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-filter:hover { background: #064210; }
+
+        /* --- Galería --- */
         .gallery-item {
             display: inline-block;
             width: 100%;
@@ -78,7 +115,8 @@
             overflow: hidden;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             animation: fadeIn 0.5s ease-in;
-            position: relative; /* Para posicionar el botón seleccionar */
+            position: relative;
+            background: white;
         }
         
         @keyframes fadeIn {
@@ -86,16 +124,18 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .gallery-item img { width: 100%; height: auto; display: block; }
+        .gallery-item img { 
+            width: 100%; height: auto; display: block; cursor: pointer; transition: 0.3s;
+        }
+        .gallery-item img:hover { opacity: 0.9; }
         
         .gallery-item p {
             margin: 0; padding: 10px; background-color: #fff;
             text-align: center; font-weight: bold; color: #444; font-size: 0.9em;
         }
 
-        /* --- Botón Seleccionar (NUEVO) --- */
         .select-btn {
-            display: none; /* Oculto por defecto */
+            display: none;
             position: absolute;
             top: 10px;
             right: 10px;
@@ -113,19 +153,59 @@
         .gallery-item:hover .select-btn { display: block; }
         .select-btn:hover { background-color: #c0392b; }
         
-        /* --- Responsivo --- */
-        @media (max-width: 1000px) { .gallery-container { column-count: 3; } }
-        @media (max-width: 768px) { .gallery-container { column-count: 2; } .top-bar { flex-direction: column; gap: 10px; } }
+        /* --- MODAL (ESTILOS NUEVOS) --- */
+        .modal {
+            display: none; 
+            position: fixed;
+            z-index: 2000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            display: flex;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .modal-img-container { width: 50%; background: #f0f0f0; }
+        .modal-img-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .modal-details { width: 50%; padding: 40px; display: flex; flex-direction: column; justify-content: center; }
+        .modal-details h2 { margin-top: 0; color: #333; }
+        .modal-details .price { color: #27ae60; font-size: 1.5em; font-weight: bold; margin: 10px 0; }
+        .modal-details .desc { color: #666; line-height: 1.6; margin-bottom: 20px; }
+        .modal-meta { font-size: 0.9em; color: #888; margin-bottom: 20px; border-top: 1px solid #eee; padding-top: 10px; }
+
+        .close-modal {
+            position: absolute;
+            top: 15px; right: 20px;
+            color: #aaa; font-size: 30px; font-weight: bold; cursor: pointer; z-index: 10;
+        }
+        .close-modal:hover { color: #000; }
+
+        @media (max-width: 768px) {
+            .modal-content { flex-direction: column; max-height: 90vh; overflow-y: auto; }
+            .modal-img-container, .modal-details { width: 100%; }
+            .modal-img-container { height: 250px; }
+            .sidebar { display: none; } 
+            .gallery-container { margin-left: 0; max-width: 100%; column-count: 2; }
+        }
         @media (max-width: 480px) { .gallery-container { column-count: 1; } }
 
-        /* --- Indicador de Carga --- */
         .loading-indicator {
-            display: none;
-            text-align: center;
-            padding: 20px;
-            font-weight: bold;
-            color: #555;
-            font-size: 1.1em;
+            display: none; text-align: center; padding: 20px; font-weight: bold; color: #555; font-size: 1.1em;
         }
         .loading-indicator.show { display: block; }
     </style>
@@ -138,28 +218,40 @@
             <p id="userBudget">Presupuesto: $...</p>
         </div>
         
-        <div class="menu-dropdown">
-            <button class="menu-btn">Menú ▼</button>
-            <div class="dropdown-content">
-                <a href="Perfil.html">Mi Perfil</a>
-                <a href="#" onclick="cerrarSesion()">Cerrar Sesión</a>
+       <div style="display:flex; align-items:center; gap: 15px;">
+            <div class="notification-icon" onclick="mostrarNotificaciones()" style="position: relative; cursor: pointer; font-size: 24px;">
+                🔔
+                <span id="badgeNotif" style="display:none; position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:18px; height:18px; font-size:12px; justify-content:center; align-items:center;">0</span>
+            </div>
+
+            <div class="menu-dropdown">
+                <button class="menu-btn">Menú ▼</button>
+                <div class="dropdown-content">
+                    <a href="Perfil.html">Mi Perfil</a>
+                    <a href="#" onclick="cerrarSesion()">Cerrar Sesión</a>
+                </div>
             </div>
         </div>
     </header>
-    <aside class="sidebar centered" style="padding: 20px;  margin: 2px auto; background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">    
+
+    <aside class="sidebar centered ">
+        <h3 style="color: #465d6c; margin-top: 0;">Preferencias</h3>
+        <label>Presupuesto Máximo (Item)</label>
+        <input type="number" id="filterPresupuesto" placeholder="Ej: 5000">
         <label>Departamento</label>
-            <select id="filterDpto">
-                <option value="">Todos (Bolivia)</option>
-                <option value="Cochabamba">Cochabamba</option>
-                <option value="Santa Cruz">Santa Cruz</option>
-                <option value="La Paz">La Paz</option>
-                <option value="Tarija">Tarija</option>
-                <option value="Chuquisaca">Chuquisaca</option>
-                <option value="Potosí">Potosí</option>
-                <option value="Oruro">Oruro</option>
-                <option value="Beni">Beni</option>
-                <option value="Pando">Pando</option>
-            </select>
+        <select id="filterDpto">
+            <option value="">Todos (Bolivia)</option>
+            <option value="Cochabamba">Cochabamba</option>
+            <option value="Santa Cruz">Santa Cruz</option>
+            <option value="La Paz">La Paz</option>
+            <option value="Tarija">Tarija</option>
+            <option value="Chuquisaca">Chuquisaca</option>
+            <option value="Potosí">Potosí</option>
+            <option value="Oruro">Oruro</option>
+            <option value="Beni">Beni</option>
+            <option value="Pando">Pando</option>
+        </select>
+
         <label>Capacidad (Salones)</label>
         <input type="number" id="filterCap" placeholder="Mínimo de personas">
 
@@ -170,10 +262,49 @@
     </aside>
 
     <main class="gallery-container" id="galleryContainer">
-        </main>
+    </main>
 
     <div class="loading-indicator" id="loadingIndicator">
         Cargando más ideas...
+    </div>
+
+    <div id="detalleModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="cerrarModal()">&times;</span>
+            
+            <div class="modal-img-container">
+                <img id="mImagen" src="" alt="Detalle">
+            </div>
+            
+            <div class="modal-details">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <small id="mTipo" style="text-transform: uppercase; color: #3498db; font-weight:bold; letter-spacing: 1px;">CATEGORÍA</small>
+                    <small id="mDpto" style="color: #888;">Ubicación</small>
+                </div>
+                
+                <h2 id="mTitulo" style="margin: 10px 0;">Título del Producto</h2>
+                <p id="mPrecio" class="price" style="font-size: 1.8em; color: #27ae60; margin: 0;">Bs 0.00</p>
+                
+                <div style="margin-top: 20px;">
+                    <strong>Descripción:</strong>
+                    <p id="mDescripcion" class="desc" style="color: #555; line-height: 1.5;">...</p>
+                </div>
+
+                <div id="mExtrasSalon" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none;">
+                    <p style="margin: 5px 0;">👥 <strong>Capacidad:</strong> <span id="mCapacidad">...</span> personas</p>
+                    <p style="margin: 5px 0;">🪑 <strong>Mesas:</strong> <span id="mMesas">...</span></p>
+                    <p style="margin: 5px 0;">🍽️ <strong>Cubiertos/Mantelería:</strong> <span id="mCubiertos">...</span></p>
+                </div>
+
+                <div class="modal-meta">
+                    <p>📅 Reserva con: <span id="mReglaPago">...</span> meses de anticipación</p>
+                </div>
+
+                <button id="mBotonGuardar" class="select-btn" style="width: 100%; padding: 15px; font-size: 1.1em; position: relative; display: block;">
+                    ❤ Guardar en mi Perfil
+                </button>
+            </div>
+        </div>
     </div>
 
 <script>
@@ -182,57 +313,110 @@
     const galleryContainer = document.getElementById('galleryContainer');
     const loadingIndicator = document.getElementById('loadingIndicator');
     
-    // Aquí guardaremos los productos que nos envíe la base de datos
     let productosDelCatalogo = []; 
     let productosMostrados = 0;
 
     // --- 1. AL CARGAR LA PÁGINA ---
     window.addEventListener('DOMContentLoaded', async () => {
-        // Verificar sesión
         const idUsuario = localStorage.getItem('usuarioId');
         if (!idUsuario) {
             window.location.href = 'Login.html';
             return;
         }
 
-        // A. Cargar Info del Header (Nombre y Presupuesto)
+        // A. Header
+        try {
+            const response = await fetch(`http://localhost:3000/header-info/${idUsuario}`);
+            const data = await response.json();
+            if (data.success) {
+                let presupuesto = parseFloat(data.usuario.presupuesto_estimado).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
+                document.getElementById('userName').textContent = data.usuario.nombre;
+                document.getElementById('userBudget').textContent = `Presupuesto: ${presupuesto}`;
+            }
+        } catch (error) { console.error("Error cargando header:", error); }
+
+        // B. Catálogo
+        await loadInitialImages(idUsuario);
+    });
+
+    // --- 1. AL CARGAR LA PÁGINA (Pre-llenar presupuesto) ---
+    window.addEventListener('DOMContentLoaded', async () => {
+        const idUsuario = localStorage.getItem('usuarioId');
+        if (!idUsuario) { window.location.href = 'Login.html'; return; }
+
+        // A. Header y Pre-llenado de filtros
         try {
             const response = await fetch(`http://localhost:3000/header-info/${idUsuario}`);
             const data = await response.json();
 
             if (data.success) {
-                let presupuesto = parseFloat(data.usuario.presupuesto_estimado).toLocaleString('es-ES', { 
-                    style: 'currency', currency: 'BOB' 
-                });
+                // Mostrar en el header
+                let presupuestoFormatted = parseFloat(data.usuario.presupuesto_estimado).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
                 document.getElementById('userName').textContent = data.usuario.nombre;
-                document.getElementById('userBudget').textContent = `Presupuesto: ${presupuesto}`;
+                document.getElementById('userBudget').textContent = `Presupuesto: ${presupuestoFormatted}`;
+                
+                // NUEVO: Pre-llenar el input del filtro con el presupuesto guardado
+                document.getElementById('filterPresupuesto').value = data.usuario.presupuesto_estimado;
+                
+                // Cargar catálogo INICIAL usando ese presupuesto por defecto
+                loadInitialImages(idUsuario, { presupuesto: data.usuario.presupuesto_estimado });
             }
-        } catch (error) {
-            console.error("Error cargando header:", error);
+        } catch (error) { console.error("Error cargando header:", error); }
+    });
+    // --- CONTROL DE NOTIFICACIONES ---
+    window.addEventListener('DOMContentLoaded', async () => {
+        const idUsuario = localStorage.getItem('usuarioId');
+        if(idUsuario) {
+            try {
+                const res = await fetch(`http://localhost:3000/notificaciones/${idUsuario}`);
+                const data = await res.json();
+                const lista = data.notificaciones;
+                
+                if(lista.length > 0) {
+                    const badge = document.getElementById('badgeNotif');
+                    badge.style.display = 'flex';
+                    badge.textContent = lista.length;
+                    
+                    // Guardamos los datos para mostrarlos al click
+                    window.listaNotificaciones = lista; 
+                }
+            } catch(e) { console.error(e); }
         }
-
-        // B. Cargar el Catálogo Personalizado (Productos reales)
-        await loadInitialImages(idUsuario);
     });
 
-    // --- 2. FUNCIÓN PARA PEDIR PRODUCTOS AL SERVIDOR ---
-// 1. Modificar 'loadInitialImages' para aceptar filtros
-// 1. FUNCIÓN DE CARGA INTELIGENTE
+    function mostrarNotificaciones() {
+        if(!window.listaNotificaciones || window.listaNotificaciones.length === 0) {
+            alert("No tienes notificaciones pendientes.");
+            return;
+        }
+        
+        let mensaje = "⚠️ PAGOS POR VENCER:\n\n";
+        window.listaNotificaciones.forEach(notif => {
+            const fecha = new Date(notif.fecha_limite_pago).toLocaleDateString();
+            mensaje += `- ${notif.tipo_opcion}: Bs ${notif.monto_total} (Vence: ${fecha})\n`;
+        });
+        mensaje += "\nVe a tu Perfil para pagar.";
+        alert(mensaje);
+    }
+
+    // --- 2. FUNCIÓN DE CARGA (Aceptar presupuesto) ---
     async function loadInitialImages(idUsuario, filtros = {}) {
+        if (isLoading) return;
+        isLoading = true;
         loadingIndicator.classList.add('show');
         galleryContainer.innerHTML = ''; 
         productosMostrados = 0; 
 
         try {
-            // Construimos la URL base
             let url = `http://localhost:3000/catalogo-personalizado/${idUsuario}?`;
             
-            // Agregamos los parámetros si existen
             if (filtros.fecha) url += `&fecha=${filtros.fecha}`;
             if (filtros.dpto) url += `&dpto=${encodeURIComponent(filtros.dpto)}`;
             if (filtros.capacidad) url += `&capacidad=${filtros.capacidad}`;
+            // NUEVO PARÁMETRO
+            if (filtros.presupuesto) url += `&presupuesto=${filtros.presupuesto}`;
 
-            console.log("Consultando:", url); // Para depurar
+            console.log("Consultando:", url);
 
             const response = await fetch(url);
             const data = await response.json();
@@ -241,58 +425,73 @@
                 productosDelCatalogo = data.productos;
                 addImagesToDOM();
             } else {
-                galleryContainer.innerHTML = `
-                    <div style="text-align:center; width:100%; grid-column: 1 / -1; color:#666; padding: 40px;">
-                        <h3>No hay resultados con estos filtros.</h3>
-                        <p>Intenta cambiar el departamento o la fecha.</p>
-                    </div>`;
+                galleryContainer.innerHTML = `<div style="text-align:center; width:100%; grid-column: 1 / -1; color:#666; padding: 40px;"><h3>No hay resultados.</h3><p>Intenta aumentar el presupuesto o cambiar los filtros.</p></div>`;
             }
-
         } catch (error) {
             console.error(error);
             galleryContainer.innerHTML = "<p>Error de conexión.</p>";
         } finally {
+            isLoading = false;
             loadingIndicator.classList.remove('show');
         }
     }
 
-    // 2. EL BOTÓN "APLICAR FILTROS"
+    // --- 3. BOTÓN APLICAR (Leer el input) ---
+    async function aplicarFiltros() {
+        const idUsuario = localStorage.getItem('usuarioId');
+        const dpto = document.getElementById('filterDpto').value;
+        const cap = document.getElementById('filterCap').value;
+        const fecha = document.getElementById('filterDate').value;
+        const pres = document.getElementById('filterPresupuesto').value;
+        
+        // 1. GUARDAR PRESUPUESTO (Esperamos a que termine con 'await')
+        if (pres) {
+            try {
+                const saveRes = await fetch('http://localhost:3000/actualizar-presupuesto', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idUsuario: idUsuario, nuevoPresupuesto: pres })
+                });
+                
+                if(saveRes.ok) {
+                    // Actualizar visualmente el header
+                    const presFormat = parseFloat(pres).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
+                    document.getElementById('userBudget').textContent = `Presupuesto: ${presFormat}`;
+                }
+            } catch (e) { console.error("Error guardando:", e); }
+        }
+
+        // 2. FILTRAR (Enviamos el nuevo presupuesto explícitamente)
+        loadInitialImages(idUsuario, { 
+            fecha: fecha, 
+            dpto: dpto, 
+            capacidad: cap,
+            presupuesto: pres 
+        });
+    }
+
     function aplicarFiltros() {
         const idUsuario = localStorage.getItem('usuarioId');
-        
-        // Capturamos los valores de los inputs del Sidebar
         const dpto = document.getElementById('filterDpto').value;
         const cap = document.getElementById('filterCap').value;
         const fecha = document.getElementById('filterDate').value;
         
-        // Recargamos el catálogo enviando todo
-        loadInitialImages(idUsuario, { 
-            fecha: fecha,
-            dpto: dpto,
-            capacidad: cap
-        });
+        loadInitialImages(idUsuario, { fecha, dpto, capacidad: cap });
     }
 
-    // --- 3. FUNCIÓN PARA PINTAR LAS IMÁGENES (Paginación local) ---
+    // --- 3. PINTAR IMÁGENES ---
     function addImagesToDOM() {
         const limite = Math.min(productosMostrados + 10, productosDelCatalogo.length);
-        
         for (let i = productosMostrados; i < limite; i++) {
-            const producto = productosDelCatalogo[i];
-            const item = createImageItem(producto);
-            galleryContainer.appendChild(item);
+            galleryContainer.appendChild(createImageItem(productosDelCatalogo[i]));
         }
         productosMostrados = limite;
     }
 
-    // --- 4. CREAR EL HTML DE CADA PRODUCTO ---
     function createImageItem(producto) { 
         const item = document.createElement('div');
         item.className = 'gallery-item';
 
-        // Datos reales de la BD
-        // Nota: Si tu imagen en BD empieza con "boda/...", asegúrate que la ruta sea correcta
-        // desde donde se ejecuta el HTML. Si no carga, probamos ajustando la ruta.
         const imageUrl = producto.url_imagen; 
         const titulo = producto.nombre_item;
         const precio = parseFloat(producto.costo_base).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
@@ -300,22 +499,21 @@
         const img = document.createElement('img');
         img.src = imageUrl; 
         img.alt = titulo;
+        img.onerror = function() { this.src = 'https://placehold.co/400x300?text=Sin+Imagen'; };
         
-        // Si la imagen falla (ruta mal escrita en BD), muestra esto:
-        img.onerror = function() { 
-            this.src = 'https://placehold.co/400x300?text=Sin+Imagen'; 
-        };
+        // ABRIR MODAL AL CLIC
+        img.onclick = () => abrirModal(producto);
 
         const p = document.createElement('p');
-        // Mostrar Título y Precio bonito
         p.innerHTML = `<strong>${titulo}</strong><br><span style="color:#27ae60; font-size:0.9em;">${precio}</span>`;
 
         const btn = document.createElement('button');
         btn.className = 'select-btn';
         btn.textContent = '❤ Seleccionar';
-        
-        // Al hacer clic, llamamos a guardarItem pasando TODO el objeto producto
-        btn.onclick = () => guardarItem(producto); 
+        btn.onclick = (e) => {
+            e.stopPropagation(); 
+            guardarItem(producto); 
+        };
 
         item.appendChild(img);
         item.appendChild(p);
@@ -324,51 +522,77 @@
         return item;
     }
 
-    // --- 5. SCROLL INFINITO ---
+    // --- 4. LÓGICA DEL MODAL (NUEVO) ---
+    function abrirModal(producto) {
+        const modal = document.getElementById('detalleModal');
+        
+        document.getElementById('mImagen').src = producto.url_imagen;
+        document.getElementById('mTitulo').textContent = producto.nombre_item;
+        document.getElementById('mTipo').textContent = producto.tipo;
+        document.getElementById('mDpto').textContent = "📍 " + producto.departamento;
+        document.getElementById('mPrecio').textContent = parseFloat(producto.costo_base).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
+        document.getElementById('mDescripcion').textContent = producto.descripcion || "Sin descripción detallada.";
+        document.getElementById('mReglaPago').textContent = producto.regla_pago_meses;
+
+        // Extras solo para salón
+        const divExtras = document.getElementById('mExtrasSalon');
+        if (producto.tipo === 'Salon') {
+            divExtras.style.display = 'block';
+            document.getElementById('mCapacidad').textContent = producto.capacidad || "N/A";
+            document.getElementById('mMesas').innerHTML = producto.incluye_mesas ? '<span style="color:green">✔ Sí</span>' : '<span style="color:red">✘ No</span>';
+            document.getElementById('mCubiertos').innerHTML = producto.incluye_cubiertos ? '<span style="color:green">✔ Sí</span>' : '<span style="color:red">✘ No</span>';
+        } else {
+            divExtras.style.display = 'none';
+        }
+
+        // Botón del modal
+        const btn = document.getElementById('mBotonGuardar');
+        btn.onclick = () => {
+            guardarItem(producto);
+            cerrarModal();
+        };
+
+        modal.style.display = "flex";
+    }
+
+    function cerrarModal() {
+        document.getElementById('detalleModal').style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('detalleModal')) {
+            cerrarModal();
+        }
+    }
+
+    // --- 5. OTROS ---
     window.addEventListener('scroll', () => {
         if (isLoading) return;
-        // Si llegamos al final, cargamos más de la lista que ya tenemos en memoria
         if (window.innerHeight + window.scrollY >= document.documentElement.offsetHeight - 100) {
             addImagesToDOM();
         }
     });
 
-    // --- 6. FUNCIÓN GUARDAR (CREAR RESERVA REAL) ---
     async function guardarItem(producto) { 
         const idUsuario = localStorage.getItem('usuarioId');
-        if(!idUsuario) {
-            alert("Debes iniciar sesión para guardar.");
-            return;
-        }
-
         try {
             const response = await fetch('http://localhost:3000/crear-reserva', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     id_usuario: idUsuario, 
-                    // Enviamos los datos clave para la tabla Reserva
                     id_opcion: producto.id, 
-                    tipo_opcion: producto.tipo, // 'Salon', 'Decoracion', etc.
+                    tipo_opcion: producto.tipo, 
                     monto_total: producto.costo_base, 
                     regla_pago_meses: producto.regla_pago_meses 
                 })
             });
-
             const data = await response.json();
-            if(data.success) {
-                alert("¡Ítem guardado en tu perfil!");
-                // Opcional: Cambiar el botón a "Guardado"
-            } else {
-                alert("Error al guardar: " + data.message);
-            }
-        } catch (e) {
-            console.error(e);
-            alert("Error de conexión.");
-        }
+            if(data.success) alert("¡Guardado!");
+            else alert("Error: " + data.message);
+        } catch (e) { console.error(e); }
     }
 
-    // --- 7. CERRAR SESIÓN ---
     function cerrarSesion() {
         localStorage.clear();
         window.location.href = 'Login.html';
