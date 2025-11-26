@@ -61,6 +61,47 @@
         .menu-dropdown:hover .dropdown-content { display: block; }
         .menu-dropdown:hover .menu-btn { background-color: #064210; }
         
+        /* Estilos para los nuevos iconos del header */
+        .nav-icons {
+            display: flex;
+            align-items: center;
+            gap: 20px; /* Espacio entre iconos */
+        }
+
+        .nav-btn-icon {
+            background: none;
+            border: none;
+            font-size: 24px; /* Tamaño del emoji/icono */
+            cursor: pointer;
+            color: #555;
+            transition: transform 0.2s, color 0.2s;
+            position: relative;
+            text-decoration: none; /* Para los <a> */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .nav-btn-icon:hover {
+                transform: scale(1.2);
+                color: #3498db;
+            }
+
+            /* Tooltip (texto al pasar el mouse) */
+            .nav-btn-icon:hover::after {
+                content: attr(title); /* Usa el atributo title del HTML */
+                position: absolute;
+                bottom: -25px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0,0,0,0.8);
+                color: white;
+                font-size: 12px;
+                padding: 4px 8px;
+                border-radius: 4px;
+                white-space: nowrap;
+                pointer-events: none;
+            }
         /* --- SIDEBAR DE PREFERENCIAS --- */
         .gallery-container {
             column-count: 4;
@@ -218,19 +259,19 @@
             <p id="userBudget">Presupuesto: $...</p>
         </div>
         
-       <div style="display:flex; align-items:center; gap: 15px;">
-            <div class="notification-icon" onclick="mostrarNotificaciones()" style="position: relative; cursor: pointer; font-size: 24px;">
+        <div class="nav-icons">
+            <div class="nav-btn-icon" onclick="mostrarNotificaciones()" title="Notificaciones">
                 🔔
-                <span id="badgeNotif" style="display:none; position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:18px; height:18px; font-size:12px; justify-content:center; align-items:center;">0</span>
+                <span id="badgeNotif" style="display:none; position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:16px; height:16px; font-size:10px; justify-content:center; align-items:center;">0</span>
             </div>
 
-            <div class="menu-dropdown">
-                <button class="menu-btn">Menú ▼</button>
-                <div class="dropdown-content">
-                    <a href="Perfil.html">Mi Perfil</a>
-                    <a href="#" onclick="cerrarSesion()">Cerrar Sesión</a>
-                </div>
-            </div>
+            <a href="Perfil.html" class="nav-btn-icon" title="Mi Perfil">
+                👤
+            </a>
+
+            <button class="nav-btn-icon" onclick="cerrarSesion()" title="Cerrar Sesión" style="color: #e74c3c;">
+                🚪
+            </button>
         </div>
     </header>
 
@@ -456,37 +497,54 @@
 
     // --- 3. BOTÓN APLICAR (Leer el input) ---
 // --- FUNCIÓN APLICAR FILTROS (CORREGIDA) ---
+    // --- 3. BOTÓN APLICAR (GUARDAR Y FILTRAR - VERSIÓN CORRECTA) ---
     async function aplicarFiltros() {
         const idUsuario = localStorage.getItem('usuarioId');
+        
+        // 1. Obtener valores de los inputs
         const dpto = document.getElementById('filterDpto').value;
         const cap = document.getElementById('filterCap').value;
         const fecha = document.getElementById('filterDate').value;
+        const nuevoPresupuesto = document.getElementById('filterPresupuesto').value;
         
-        // Capturamos el valor actual del input
-        const pres = document.getElementById('filterPresupuesto').value;
-        
-        // 1. GUARDAR EN BD
-        if (pres) {
+        // 2. SI HAY UN NUEVO PRESUPUESTO, GUARDARLO EN LA BD
+        if (nuevoPresupuesto && nuevoPresupuesto.trim() !== "") {
             try {
-                await fetch('http://localhost:3000/actualizar-presupuesto', {
+                // Petición al servidor para actualizar la CuentaPareja
+                const saveRes = await fetch('http://localhost:3000/actualizar-presupuesto', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ idUsuario: idUsuario, nuevoPresupuesto: pres })
+                    body: JSON.stringify({ 
+                        idUsuario: idUsuario, 
+                        nuevoPresupuesto: nuevoPresupuesto 
+                    })
                 });
                 
-                // Actualizar visualmente el texto de arriba
-                const presFormat = parseFloat(pres).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
-                document.getElementById('userBudget').textContent = `Presupuesto: ${presFormat}`;
-            } catch (e) { console.error("Error guardando:", e); }
+                if(saveRes.ok) {
+                    console.log("Presupuesto guardado exitosamente en BD.");
+                    
+                    // --- ACTUALIZACIÓN VISUAL INMEDIATA ---
+                    const presFormat = parseFloat(nuevoPresupuesto).toLocaleString('es-ES', { 
+                        style: 'currency', 
+                        currency: 'BOB' 
+                    });
+                    document.getElementById('userBudget').textContent = `Presupuesto: ${presFormat}`;
+                } else {
+                    console.error("Error del servidor al guardar presupuesto");
+                }
+            } catch (e) { 
+                console.error("Error de conexión al guardar:", e); 
+            }
         }
 
-        // 2. RECARGAR CATÁLOGO (Enviando explícitamente 'pres')
-        // Esto enviará ?presupuesto=25000 al backend
+        // 3. RECARGAR EL CATÁLOGO CON LOS FILTROS APLICADOS
+        console.log("Aplicando filtro con presupuesto:", nuevoPresupuesto);
+        
         loadInitialImages(idUsuario, { 
             fecha: fecha, 
             dpto: dpto, 
             capacidad: cap,
-            presupuesto: pres 
+            presupuesto: nuevoPresupuesto // Enviamos el valor explícitamente
         });
     }
 

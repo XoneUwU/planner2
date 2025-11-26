@@ -214,7 +214,9 @@
 <body>
 
     <div class="register-container">
-        
+        <a href="home.html" style="position: absolute; top: 20px; left: 20px; text-decoration: none; color: #777; font-weight: bold;">
+            &larr; Volver
+        </a>
         <div id="step1" class="step active">
             <h2>Crear Cuenta</h2>
             <p style="color: #777; font-size: 0.9em;">Paso 1 de 2</p>
@@ -304,12 +306,43 @@
 <script>
     let datosUsuario = {};
     let coloresSeleccionados = [];
+    const MAX_COLORES = 2;
+
+    // --- BLOQUEO DE NÚMEROS EN TIEMPO REAL ---
+    // Corregido: Obtenemos el elemento antes de usarlo
+    const inputNombre = document.getElementById('nombre');
+    
+    inputNombre.addEventListener('input', function(e) {
+        // Guardamos el valor original
+        const valorAnterior = this.value;
+
+        // Regex: busca todo lo que NO sea letra o espacio
+        const caracteresNoPermitidos = /[^a-zA-ZñÑáéíóúÁÉÍÓÚ\s]/g;
+
+        // Si hay caracteres prohibidos...
+        if (caracteresNoPermitidos.test(this.value)) {
+            // ... los borramos instantáneamente
+            this.value = this.value.replace(caracteresNoPermitidos, '');
+            
+            // Efecto visual de error
+            this.style.borderColor = "red";
+            setTimeout(() => {
+                this.style.borderColor = "#ddd"; 
+            }, 500);
+        }
+    });
 
     // --- LÓGICA DEL PASO 1 ---
     document.getElementById('formStep1').addEventListener('submit', function(e) {
         e.preventDefault();
         
         const nombre = document.getElementById('nombre').value;
+        const nombreRegex = /^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]+$/;
+            
+            if (!nombreRegex.test(nombre)) {
+                alert("El nombre no puede contener números ni caracteres especiales.");
+                return; // Detiene el proceso
+            }
         const correo = document.getElementById('correo').value;
         const contrasena = document.getElementById('contrasena').value;
         const confirmar = document.getElementById('confirmarContrasena').value;

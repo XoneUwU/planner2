@@ -30,7 +30,11 @@ app.get('/', (req, res) => {
 // ==================================================================
 app.post('/register', async (req, res) => {
     const { nombre, correo, contrasena, presupuesto, codigo_pareja_input, colores } = req.body;
-    
+    // VALIDACIÓN BACKEND
+    const nombreRegex = /^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]+$/;
+    if (!nombreRegex.test(nombre)) {
+        return res.status(400).json({ message: 'Nombre inválido (solo letras permitidas).' });
+    }
     console.log('--- NUEVO REGISTRO ---');
     console.log('Colores recibidos:', colores);
 
@@ -219,34 +223,41 @@ app.post('/login', async (req, res) => {
 });
 
 // ==================================================================
-// 3. RUTA DE PERFIL COMPLETO
-// ==================================================================
+// 1. RUTA PERFIL (ACTUALIZADA: TRAE DATOS DETALLADOS)
 app.get('/perfil-completo/:id', async (req, res) => {
     const idUsuario = req.params.id;
-
-    if (!idUsuario) return res.status(400).json({ success: false, message: 'Falta ID' });
+    if (!idUsuario) return res.status(400).json({ success: false });
 
     try {
+        // ... (Tu lógica de usuario y cuenta se mantiene igual) ...
         const userQuery = 'SELECT nombre_completo, fk_cuentapareja_id FROM Usuario WHERE id_usuario = $1';
         const userRes = await pool.query(userQuery, [idUsuario]);
-        
         if (userRes.rows.length === 0) return res.status(404).json({ success: false });
         
         const miPerfil = userRes.rows[0];
-        const idCuentaPareja = miPerfil.fk_cuentapareja_id;
+        const idCuenta = miPerfil.fk_cuentapareja_id;
 
         const cuentaQuery = 'SELECT codigodepareja, presupuesto_estimado, fecha_boda FROM CuentaPareja WHERE id_cuentapareja = $1';
-        const cuentaRes = await pool.query(cuentaQuery, [idCuentaPareja]);
+        const cuentaRes = await pool.query(cuentaQuery, [idCuenta]);
         const miCuenta = cuentaRes.rows[0];
 
         let nombrePareja = null;
         const parejaQuery = 'SELECT nombre_completo FROM Usuario WHERE fk_cuentapareja_id = $1 AND id_usuario != $2';
-        const parejaRes = await pool.query(parejaQuery, [idCuentaPareja, idUsuario]);
+        const parejaRes = await pool.query(parejaQuery, [idCuenta, idUsuario]);
         if (parejaRes.rows.length > 0) nombrePareja = parejaRes.rows[0].nombre_completo;
 
-        // Consulta para traer los ítems reservados
+        // --- CONSULTA MEJORADA (Trae Capacidad, Depto y Reglas) ---
+        // --- CONSULTA CORREGIDA (AHORA INCLUYE EL ACUMULADO) ---
         const itemsQuery = `
-            SELECT r.id_reserva, r.tipo_opcion, r.monto_total, r.estado_pago,
+            SELECT 
+                r.id_reserva, 
+                r.tipo_opcion, 
+                r.monto_total, 
+                r.estado_pago,
+                r.monto_pagado_acumulado, -- <--- ¡ESTO FALTABA!
+                r.fecha_limite_pago,
+
+                -- Nombre
                 CASE
                     WHEN r.tipo_opcion = 'Salon' THEN s.nombre_lugar
                     WHEN r.tipo_opcion = 'Decoracion' THEN d.nombre_item
@@ -254,13 +265,36 @@ app.get('/perfil-completo/:id', async (req, res) => {
                     WHEN r.tipo_opcion = 'Fotografo' THEN f.nombre_servicio
                     WHEN r.tipo_opcion = 'Planeador' THEN p.nombre_servicio
                 END AS nombre_item,
+                -- Imagen
                 CASE
                     WHEN r.tipo_opcion = 'Salon' THEN s.url_imagen
                     WHEN r.tipo_opcion = 'Decoracion' THEN d.url_imagen
                     WHEN r.tipo_opcion = 'Catering' THEN c.url_imagen
                     WHEN r.tipo_opcion = 'Fotografo' THEN f.url_imagen
                     WHEN r.tipo_opcion = 'Planeador' THEN p.url_imagen
-                END AS url_imagen
+                END AS url_imagen,
+                -- Departamento
+                CASE
+                    WHEN r.tipo_opcion = 'Salon' THEN s.departamento
+                    WHEN r.tipo_opcion = 'Decoracion' THEN d.departamento
+                    WHEN r.tipo_opcion = 'Catering' THEN c.departamento
+                    WHEN r.tipo_opcion = 'Fotografo' THEN f.departamento
+                    WHEN r.tipo_opcion = 'Planeador' THEN p.departamento
+                END AS departamento,
+                -- Regla Pago
+                CASE
+                    WHEN r.tipo_opcion = 'Salon' THEN s.regla_pago_meses
+                    WHEN r.tipo_opcion = 'Decoracion' THEN d.regla_pago_meses
+                    WHEN r.tipo_opcion = 'Catering' THEN c.regla_pago_meses
+                    WHEN r.tipo_opcion = 'Fotografo' THEN f.regla_pago_meses
+                    WHEN r.tipo_opcion = 'Planeador' THEN p.regla_pago_meses
+                END AS regla_meses,
+                -- Capacidad
+                CASE
+                    WHEN r.tipo_opcion = 'Salon' THEN s.capacidad
+                    ELSE NULL
+                END AS capacidad
+
             FROM Reserva r
             LEFT JOIN Salon s ON r.fk_opcion_id = s.id_salon AND r.tipo_opcion = 'Salon'
             LEFT JOIN Decoraciones d ON r.fk_opcion_id = d.id_decoracion AND r.tipo_opcion = 'Decoracion'
@@ -271,7 +305,7 @@ app.get('/perfil-completo/:id', async (req, res) => {
             ORDER BY r.id_reserva DESC;
         `;
         
-        const itemsRes = await pool.query(itemsQuery, [idCuentaPareja]);
+        const itemsRes = await pool.query(itemsQuery, [idCuenta]);
 
         res.json({
             success: true,
@@ -287,13 +321,69 @@ app.get('/perfil-completo/:id', async (req, res) => {
 
     } catch (error) {
         console.error('Error en perfil:', error);
-        res.status(500).json({ success: false, message: 'Error interno' });
+        res.status(500).json({ success: false });
+    }
+});
+
+// 2. RUTA CREAR RESERVA (ACTUALIZADA: BLOQUEA DUPLICADOS)
+app.post('/crear-reserva', async (req, res) => {
+    const { id_usuario, id_opcion, tipo_opcion, monto_total, regla_pago_meses } = req.body;
+
+    if (!id_usuario || !id_opcion) {
+        return res.status(400).json({ success: false, message: 'Datos incompletos.' });
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Obtener ID Cuenta
+        const userRes = await client.query('SELECT fk_cuentapareja_id FROM Usuario WHERE id_usuario = $1', [id_usuario]);
+        const idCuentaPareja = userRes.rows[0].fk_cuentapareja_id;
+
+        // --- VALIDACIÓN DE DUPLICADOS ---
+        const checkDuplicado = await client.query(
+            `SELECT id_reserva FROM Reserva 
+             WHERE fk_cuentapareja_id = $1 
+             AND fk_opcion_id = $2 
+             AND tipo_opcion = $3 
+             AND estado_pago != 'Cancelado'`,
+            [idCuentaPareja, id_opcion, tipo_opcion]
+        );
+
+        if (checkDuplicado.rows.length > 0) {
+            await client.query('ROLLBACK');
+            // Devolvemos error controlado
+            return res.status(400).json({ success: false, message: '¡Ya tienes guardado este ítem!' });
+        }
+        // --------------------------------
+
+        let fechaLimite = null;
+        if (regla_pago_meses) {
+            fechaLimite = new Date();
+            fechaLimite.setMonth(fechaLimite.getMonth() + parseInt(regla_pago_meses));
+        }
+
+        const query = `
+            INSERT INTO Reserva (fk_cuentapareja_id, fk_opcion_id, tipo_opcion, cantidad, monto_total, estado_pago, fecha_limite_pago)
+            VALUES ($1, $2, $3, 1, $4, 'Pendiente', $5)
+            RETURNING id_reserva`;
+        
+        await client.query(query, [idCuentaPareja, id_opcion, tipo_opcion, monto_total, fechaLimite]);
+        await client.query('COMMIT');
+        res.status(201).json({ success: true, message: '¡Guardado!' });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Error al guardar.' });
+    } finally {
+        client.release();
     }
 });
 
 // ==================================================================
-// 4. RUTA HEADER INFO (Usada en Principal.html)
-// ==================================================================
+// --- 1. RUTA HEADER INFO (AHORA DEVUELVE TAMBIÉN CANTIDAD INVITADOS) ---
 app.get('/header-info/:id', async (req, res) => {
     const idUsuario = req.params.id;
     try {
@@ -302,17 +392,56 @@ app.get('/header-info/:id', async (req, res) => {
         if (userRes.rows.length === 0) return res.status(404).json({ success: false });
         
         const usuario = userRes.rows[0];
-        const cuentaQuery = 'SELECT presupuesto_estimado FROM CuentaPareja WHERE id_cuentapareja = $1';
+        
+        // Agregamos 'cantidad_invitados' a la consulta
+        const cuentaQuery = 'SELECT presupuesto_estimado, cantidad_invitados FROM CuentaPareja WHERE id_cuentapareja = $1';
         const cuentaRes = await pool.query(cuentaQuery, [usuario.fk_cuentapareja_id]);
 
         res.json({ 
             success: true, 
             usuario: {
                 nombre: usuario.nombre_completo,
-                presupuesto_estimado: cuentaRes.rows[0].presupuesto_estimado
+                presupuesto_estimado: cuentaRes.rows[0].presupuesto_estimado,
+                cantidad_invitados: cuentaRes.rows[0].cantidad_invitados // <--- NUEVO CAMPO
             } 
         });
     } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// --- 2. RUTA ACTUALIZAR PREFERENCIAS (PRESUPUESTO + CAPACIDAD) ---
+// (Reemplaza a la ruta antigua /actualizar-presupuesto)
+app.post('/actualizar-preferencias', async (req, res) => {
+    const { idUsuario, nuevoPresupuesto, nuevaCapacidad } = req.body;
+
+    try {
+        // 1. Buscar la cuenta
+        const userRes = await pool.query('SELECT fk_cuentapareja_id FROM Usuario WHERE id_usuario = $1', [idUsuario]);
+        if (userRes.rows.length === 0) return res.status(404).json({ success: false });
+        
+        const idCuenta = userRes.rows[0].fk_cuentapareja_id;
+
+        // 2. Actualización Dinámica (Solo actualiza si el dato viene)
+        // Truco SQL: COALESCE(valor_nuevo, valor_viejo) mantiene el viejo si el nuevo es nulo
+        const query = `
+            UPDATE CuentaPareja 
+            SET 
+                presupuesto_estimado = COALESCE($1, presupuesto_estimado),
+                cantidad_invitados = COALESCE($2, cantidad_invitados)
+            WHERE id_cuentapareja = $3
+        `;
+        
+        // Si vienen vacíos o undefined, mandamos NULL para que COALESCE use el valor viejo
+        const presVal = nuevoPresupuesto ? parseFloat(nuevoPresupuesto) : null;
+        const capVal = nuevaCapacidad ? parseInt(nuevaCapacidad) : null;
+
+        await pool.query(query, [presVal, capVal, idCuenta]);
+
+        res.json({ success: true, message: 'Preferencias actualizadas' });
+
+    } catch (error) {
+        console.error('Error actualizando preferencias:', error);
         res.status(500).json({ success: false });
     }
 });
@@ -351,14 +480,13 @@ app.post('/actualizar-presupuesto', async (req, res) => {
 });
 
 // --- B. RUTA CATÁLOGO (FILTRO ESTRICTO SIN EXCEPCIONES) ---
+// --- RUTA CATÁLOGO (CORREGIDA PARA BÚSQUEDAS PARCIALES "Azul/Blanco") ---
 app.get('/catalogo-personalizado/:idUsuario', async (req, res) => {
     const { idUsuario } = req.params;
     const { fecha, dpto, capacidad, presupuesto } = req.query; 
 
-    console.log(`--> FILTRANDO CATÁLOGO para Usuario ${idUsuario}. Presupuesto Filtro: ${presupuesto}`);
-
     try {
-        // 1. Obtener colores
+        // 1. Obtener colores del usuario
         const userQuery = `
             SELECT c.colores_asociados 
             FROM Usuario u
@@ -367,25 +495,29 @@ app.get('/catalogo-personalizado/:idUsuario', async (req, res) => {
             WHERE u.id_usuario = $1
         `;
         const userRes = await pool.query(userQuery, [idUsuario]);
-        let coloresArray = [];
+        
+        // --- CAMBIO 1: PREPARAR COLORES PARA BÚSQUEDA PARCIAL ---
+        let coloresRegex = ''; // Usaremos Regex de PostgreSQL (~)
         if (userRes.rows.length > 0 && userRes.rows[0].colores_asociados) {
-            coloresArray = userRes.rows[0].colores_asociados.split(',');
+            // Convertimos ['Azul', 'Rojo'] en 'Azul|Rojo' (Esto significa Azul O Rojo en Regex)
+            coloresRegex = userRes.rows[0].colores_asociados.split(',').join('|');
         }
 
-        // --- CONSTRUCTOR DE FILTROS ---
-        const construirFiltros = (indiceInicio) => {
+        // --- HELPER PARA FILTROS (MODIFICADO) ---
+        const construirFiltros = (indiceInicio, nombreTabla) => {
             let sql = "";
             let params = [];
             let idx = indiceInicio;
 
+            // --- CAMBIO 2: DEPARTAMENTO CON 'ILIKE' Y COMODINES ---
             if (dpto && dpto !== "") {
-                sql += ` AND departamento = $${idx} `;
-                params.push(dpto);
+                // ILIKE busca sin importar mayúsculas/minúsculas
+                // Los % significan "cualquier texto antes o después"
+                sql += ` AND departamento ILIKE $${idx} `;
+                params.push(`%${dpto}%`); // Ej: busca "%Tarija%" dentro de "Tarija/Cochabamba"
                 idx++;
             }
 
-            // *** FILTRO DE PRECIO ESTRICTO ***
-            // Si llega un presupuesto, filtramos TODO lo que sea mayor.
             if (presupuesto && presupuesto > 0) {
                 sql += ` AND costo_base <= $${idx}::numeric `;
                 params.push(presupuesto);
@@ -395,27 +527,31 @@ app.get('/catalogo-personalizado/:idUsuario', async (req, res) => {
             return { sql, params, nextIdx: idx };
         };
 
-        // --- CONSULTAS ---
+        // --- A. DECORACIONES (USANDO REGEX PARA COLORES) ---
+        // Parametro $1 ahora es el string del Regex ('Azul|Blanco'), no el array
+        const filtrosDecor = construirFiltros(2, 'Decoraciones');
         
-        // A. DECORACIONES
-        const filtrosDecor = construirFiltros(2);
         const decorQuery = `
             SELECT id_decoracion as id, nombre_item, costo_base, departamento, 
                    url_imagen, color, regla_pago_meses, descripcion, 'Decoracion' as tipo 
             FROM Decoraciones
-            WHERE (color = ANY($1) OR color IS NULL)
+            WHERE (color ~* $1 OR color IS NULL) -- '~*' significa: coincide con el patrón Regex (insensible a mayúsculas)
             ${filtrosDecor.sql}
         `;
-        const decorRes = await pool.query(decorQuery, [coloresArray, ...filtrosDecor.params]);
+        
+        // Nota: Si coloresRegex está vacío, pasamos un string imposible para que no traiga nada por error (o ajusta lógica si quieres ver todo)
+        const paramColor = coloresRegex || 'SIN_COLOR_DEFINIDO';
+        const decorRes = await pool.query(decorQuery, [paramColor, ...filtrosDecor.params]);
 
-        // B. SALONES
-        let salonFiltros = construirFiltros(1);
+        // --- B. SALONES (CON LÓGICA DE REGLA DE TIEMPO) ---
+        let salonFiltros = construirFiltros(1, 'Salon');
         let salonQueryText = `
             SELECT id_salon as id, nombre_lugar as nombre_item, costo_base, departamento, 
                    capacidad, url_imagen, regla_pago_meses, incluye_mesas, incluye_cubiertos, 
                    'Descripción del lugar' as descripcion, 'Salon' as tipo 
             FROM Salon
-            WHERE 1=1 ${salonFiltros.sql}
+            WHERE 1=1 
+            ${salonFiltros.sql}
         `;
         let salonParams = [...salonFiltros.params];
         let salonIdx = salonFiltros.nextIdx;
@@ -425,8 +561,9 @@ app.get('/catalogo-personalizado/:idUsuario', async (req, res) => {
             salonParams.push(capacidad);
             salonIdx++;
         }
+
         if (fecha) {
-            // Subconsulta de disponibilidad
+            // 1. FILTRO DE DISPONIBILIDAD (Ocupado ese día)
             salonQueryText += `
                 AND id_salon NOT IN (
                     SELECT fk_opcion_id FROM Reserva r
@@ -434,21 +571,33 @@ app.get('/catalogo-personalizado/:idUsuario', async (req, res) => {
                     WHERE r.tipo_opcion = 'Salon' AND cp.fecha_boda = $${salonIdx} AND r.estado_pago != 'Cancelado'
                 )
             `;
+            // 2. NUEVO: FILTRO DE REGLA DE TIEMPO (Anticipación)
+            // Calculamos la diferencia en meses entre la Fecha Boda ($idx) y HOY.
+            // Si la regla del salón es MAYOR que el tiempo que falta, se oculta.
+            salonQueryText += `
+                AND regla_pago_meses <= (
+                    EXTRACT(YEAR FROM age($${salonIdx}::date, CURRENT_DATE)) * 12 + 
+                    EXTRACT(MONTH FROM age($${salonIdx}::date, CURRENT_DATE))
+                )
+            `;
+            
             salonParams.push(fecha);
+            salonIdx++;
         }
+        
         const salonRes = await pool.query(salonQueryText, salonParams);
-
-        // C. OTROS
+        // --- C. OTROS ---
         const otrosFiltros = construirFiltros(1);
         const otrosClause = ` WHERE 1=1 ${otrosFiltros.sql} `;
-        
+        const otrosParams = [...otrosFiltros.params];
+
         const catQuery = `SELECT id_catering as id, nombre_servicio as nombre_item, costo_base, departamento, url_imagen, regla_pago_meses, descripcion, 'Catering' as tipo FROM Catering ${otrosClause}`;
         const fotoQuery = `SELECT id_fotografo as id, nombre_servicio as nombre_item, costo_base, departamento, url_imagen, regla_pago_meses, descripcion, 'Fotografo' as tipo FROM Fotografo ${otrosClause}`;
         const planQuery = `SELECT id_planeador as id, nombre_servicio as nombre_item, costo_base, departamento, url_imagen, regla_pago_meses, descripcion, 'Planeador' as tipo FROM Planeador ${otrosClause}`;
 
-        const catRes = await pool.query(catQuery, otrosFiltros.params);
-        const fotoRes = await pool.query(fotoQuery, otrosFiltros.params);
-        const planRes = await pool.query(planQuery, otrosFiltros.params);
+        const catRes = await pool.query(catQuery, otrosParams);
+        const fotoRes = await pool.query(fotoQuery, otrosParams);
+        const planRes = await pool.query(planQuery, otrosParams);
 
         const productos = [
             ...decorRes.rows, ...salonRes.rows, ...catRes.rows, ...fotoRes.rows, ...planRes.rows
@@ -461,61 +610,50 @@ app.get('/catalogo-personalizado/:idUsuario', async (req, res) => {
         res.status(500).json({ success: false });
     }
 });
-// ==================================================================
-// 6. RUTA CREAR RESERVA (Reemplaza guardar-imagen)
-// ==================================================================
-app.post('/crear-reserva', async (req, res) => {
-    const { id_usuario, id_opcion, tipo_opcion, monto_total, regla_pago_meses } = req.body;
 
-    if (!id_usuario || !id_opcion) {
-        return res.status(400).json({ success: false, message: 'Datos incompletos.' });
-    }
-
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
-
-        const userRes = await client.query('SELECT fk_cuentapareja_id FROM Usuario WHERE id_usuario = $1', [id_usuario]);
-        const idCuentaPareja = userRes.rows[0].fk_cuentapareja_id;
-
-        let fechaLimite = null;
-        if (regla_pago_meses) {
-            fechaLimite = new Date();
-            fechaLimite.setMonth(fechaLimite.getMonth() + parseInt(regla_pago_meses));
-        }
-
-        const query = `
-            INSERT INTO Reserva 
-                (fk_cuentapareja_id, fk_opcion_id, tipo_opcion, cantidad, monto_total, estado_pago, fecha_limite_pago)
-            VALUES 
-                ($1, $2, $3, 1, $4, 'Pendiente', $5)
-            RETURNING id_reserva`;
-        
-        await client.query(query, [idCuentaPareja, id_opcion, tipo_opcion, monto_total, fechaLimite]);
-        
-        await client.query('COMMIT');
-        res.status(201).json({ success: true, message: '¡Guardado!' });
-
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error(error);
-        res.status(500).json({ success: false, message: 'Error al guardar.' });
-    } finally {
-        client.release();
-    }
-});
 
 // ==================================================================
 // 7. RUTA ELIMINAR RESERVA
 // ==================================================================
+// ==================================================================
+// 7. RUTA ELIMINAR RESERVA (BLINDADA)
+// ==================================================================
 app.post('/eliminar-reserva', async (req, res) => {
     const { id_reserva } = req.body; 
+    
+    const client = await pool.connect();
     try {
-        const result = await pool.query('DELETE FROM Reserva WHERE id_reserva = $1', [id_reserva]);
-        if (result.rowCount === 0) return res.status(404).json({ success: false });
+        await client.query('BEGIN');
+
+        // 1. Verificar si tiene pagos antes de borrar
+        const checkQuery = 'SELECT monto_pagado_acumulado FROM Reserva WHERE id_reserva = $1';
+        const checkRes = await client.query(checkQuery, [id_reserva]);
+
+        if (checkRes.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ success: false, message: 'Reserva no encontrada.' });
+        }
+
+        const pagado = parseFloat(checkRes.rows[0].monto_pagado_acumulado || 0);
+
+        // 2. SI YA PAGÓ ALGO, PROHIBIDO BORRAR
+        if (pagado > 0) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ success: false, message: 'No puedes eliminar una reserva que ya tiene pagos/abonos.' });
+        }
+
+        // 3. Si no ha pagado nada, procedemos a borrar
+        await client.query('DELETE FROM Reserva WHERE id_reserva = $1', [id_reserva]);
+        
+        await client.query('COMMIT');
         res.json({ success: true });
+
     } catch (error) {
+        await client.query('ROLLBACK');
+        console.error(error);
         res.status(500).json({ success: false });
+    } finally {
+        client.release();
     }
 });
 // --- RUTA: OBTENER NOTIFICACIONES DE PAGO ---
@@ -602,102 +740,200 @@ app.post('/admin/login', async (req, res) => {
     }
 });
 // ==================================================================
+// 9. RUTA PARA PAGAR (CON REGLA DE EXCLUSIVIDAD DE SALONES)
 // ==================================================================
-// 8. RUTA DE REPORTES AVANZADOS (ACTUALIZADA)
+app.post('/pagar-reserva', async (req, res) => {
+    // Recibimos más datos ahora
+    const { id_reserva, monto_pagado, metodo_pago, tipo_pago_elegido } = req.body; 
+    // tipo_pago_elegido puede ser 'Total' o 'Parcial'
+
+    if (!id_reserva || !monto_pagado) {
+        return res.status(400).json({ success: false, message: 'Datos incompletos' });
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Obtener información de la reserva actual
+        const resInfo = await client.query(
+            'SELECT fk_cuentapareja_id, tipo_opcion, monto_total, monto_pagado_acumulado FROM Reserva WHERE id_reserva = $1', 
+            [id_reserva]
+        );
+        
+        if (resInfo.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ success: false, message: 'Reserva no encontrada' });
+        }
+
+        const reserva = resInfo.rows[0];
+        const idCuenta = reserva.fk_cuentapareja_id;
+        const tipoServicio = reserva.tipo_opcion;
+
+        // 2. Calcular nuevo estado
+        const nuevoAcumulado = parseFloat(reserva.monto_pagado_acumulado || 0) + parseFloat(monto_pagado);
+        let nuevoEstado = 'Abonado'; // Por defecto
+
+        // Si paga todo o si la suma ya cubre el total
+        if (tipo_pago_elegido === 'Total' || nuevoAcumulado >= parseFloat(reserva.monto_total)) {
+            nuevoEstado = 'Pagado Total';
+        }
+
+        // 3. Insertar Factura
+        await client.query(
+            `INSERT INTO Factura (fk_reserva_id, monto_pagado, metodo_pago, estado_pago)
+             VALUES ($1, $2, $3, 'Aprobado')`,
+            [id_reserva, monto_pagado, metodo_pago]
+        );
+
+        // 4. Actualizar Reserva
+        await client.query(
+            `UPDATE Reserva 
+             SET estado_pago = $1, 
+                 monto_pagado_acumulado = $2 
+             WHERE id_reserva = $3`,
+            [nuevoEstado, nuevoAcumulado, id_reserva]
+        );
+
+        // 5. REGLA DE ORO: SI PAGÓ UN SALÓN, ELIMINAR LOS OTROS SALONES RESERVADOS
+        // (Solo si es un Salón y es el primer pago que confirma el compromiso)
+        if (tipoServicio === 'Salon') {
+            console.log(`Usuario pagó Salón ${id_reserva}. Eliminando competencias...`);
+            await client.query(
+                `DELETE FROM Reserva 
+                 WHERE fk_cuentapareja_id = $1 
+                 AND tipo_opcion = 'Salon' 
+                 AND id_reserva != $2`, // Borra todos MENOS el que acabo de pagar
+                [idCuenta, id_reserva]
+            );
+        }
+
+        await client.query('COMMIT');
+        res.json({ success: true, message: 'Pago exitoso. ¡Reserva confirmada!' });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error al pagar:', error);
+        res.status(500).json({ success: false, message: 'Error en el servidor' });
+    } finally {
+        client.release();
+    }
+});
+// ==================================================================
+// 8. RUTA DE REPORTES (ACTUALIZADA - DÍAS/MESES Y AZUL/VERDE)
+// ==================================================================
+// ==================================================================
+// 8. RUTA DE REPORTES (ACTUALIZADA Y CORREGIDA)
 // ==================================================================
 app.get('/admin/reportes/:tipo', async (req, res) => {
-    const { tipo } = req.params;
-    const { servicio } = req.query; // Para filtrar por 'Salon', 'Decoracion', etc.
+    const { tipo } = req.params; 
+    const { servicio, periodo } = req.query;
 
     try {
-        let query = '';
-        let params = [];
+        let q = '', p = [];
         
         switch (tipo) {
-            // 1. USUARIOS: Crecimiento por mes (Fecha de Creación)
+            // 1. USUARIOS CRECIMIENTO
             case 'usuarios-crecimiento':
-                query = `
-                    SELECT to_char(fecha_creacion, 'Month') as etiqueta, COUNT(*) as valor
-                    FROM CuentaPareja
-                    GROUP BY to_char(fecha_creacion, 'Month'), date_part('month', fecha_creacion)
-                    ORDER BY date_part('month', fecha_creacion) ASC
-                `;
+                if (periodo === 'dia') {
+                    // Si es por DÍA: Agrupamos por la fecha exacta (DATE) y ordenamos por ella
+                    q = `
+                        SELECT to_char(fecha_creacion, 'DD/MM') as lbl, COUNT(*) as val 
+                        FROM CuentaPareja 
+                        GROUP BY to_char(fecha_creacion, 'DD/MM'), DATE(fecha_creacion) 
+                        ORDER BY DATE(fecha_creacion) ASC
+                        LIMIT 30
+                    `;
+                } else {
+                    // Si es por MES: Agrupamos por el inicio del mes (DATE_TRUNC) y ordenamos por ello
+                    // Esto evita que Enero 2025 se mezcle con Enero 2024
+                    q = `
+                        SELECT to_char(fecha_creacion, 'Month') as lbl, COUNT(*) as val 
+                        FROM CuentaPareja 
+                        GROUP BY to_char(fecha_creacion, 'Month'), DATE_TRUNC('month', fecha_creacion) 
+                        ORDER BY DATE_TRUNC('month', fecha_creacion) ASC
+                    `;
+                }
                 break;
 
-            // 2. USUARIOS: Distribución de Presupuesto (Rangos)
+            // 2. USUARIOS PRESUPUESTO
             case 'usuarios-presupuesto':
-                query = `
-                    SELECT 
+                q = `SELECT 
                         CASE 
                             WHEN presupuesto_estimado < 5000 THEN 'Bajo (< 5k)'
                             WHEN presupuesto_estimado BETWEEN 5000 AND 15000 THEN 'Medio (5k - 15k)'
                             WHEN presupuesto_estimado BETWEEN 15001 AND 30000 THEN 'Alto (15k - 30k)'
                             ELSE 'Premium (> 30k)'
-                        END as etiqueta,
-                        COUNT(*) as valor
-                    FROM CuentaPareja
-                    GROUP BY etiqueta
-                    ORDER BY valor DESC
-                `;
+                        END as lbl, 
+                        COUNT(*) as val 
+                     FROM CuentaPareja 
+                     GROUP BY 1
+                     ORDER BY val DESC`;
                 break;
 
-            // 3. SERVICIOS: Demanda por Mes (Basado en Fecha de Boda)
-            // Sirve para las 5 tablas: Salon, Decoracion, Catering, Fotografo, Planeador
+            // 3. DEMANDA MENSUAL
             case 'demanda-mes':
-                if (!servicio) return res.status(400).json({ error: 'Falta parametro servicio' });
-                
-                query = `
-                    SELECT to_char(cp.fecha_boda, 'Month') as etiqueta, COUNT(r.id_reserva) as valor
-                    FROM Reserva r
-                    JOIN CuentaPareja cp ON r.fk_cuentapareja_id = cp.id_cuentapareja
-                    WHERE r.tipo_opcion = $1 AND r.estado_pago != 'Cancelado' AND cp.fecha_boda IS NOT NULL
-                    GROUP BY to_char(cp.fecha_boda, 'Month'), date_part('month', cp.fecha_boda)
-                    ORDER BY date_part('month', cp.fecha_boda) ASC
-                `;
-                params = [servicio];
+                if (!servicio) return res.status(400).json({ error: 'Falta servicio' });
+                q = `SELECT to_char(cp.fecha_boda, 'Month') as lbl, COUNT(r.id_reserva) as val 
+                     FROM Reserva r 
+                     JOIN CuentaPareja cp ON r.fk_cuentapareja_id = cp.id_cuentapareja 
+                     WHERE r.tipo_opcion = $1 AND r.estado_pago != 'Cancelado' AND cp.fecha_boda IS NOT NULL 
+                     GROUP BY 1, date_part('month', cp.fecha_boda) 
+                     ORDER BY date_part('month', cp.fecha_boda) ASC`; 
+                p = [servicio];
                 break;
 
-            // 4. TOP DE CADA CATEGORÍA (Lo que ya tenías, optimizado)
+            // 4. TOP ITEMS (CON 3 ESTADOS: PENDIENTE, ABONADO, PAGADO)
             case 'top-items':
-                if (!servicio) return res.status(400).json({ error: 'Falta parametro servicio' });
+                if (!servicio) return res.status(400).json({ error: 'Falta servicio' });
                 
-                // Lógica dinámica para saber qué tabla unir
-                let tabla = '';
-                let campoNombre = '';
-                let idCampo = '';
+                let tbl = servicio === 'Salon' ? 'Salon' : (servicio === 'Decoracion' ? 'Decoraciones' : servicio);
+                let nameCol = servicio.includes('Salon') ? 'nombre_lugar' : (servicio.includes('Decor') ? 'nombre_item' : 'nombre_servicio');
+                let idCol = 'id_' + tbl.toLowerCase().replace('es',''); 
+                if (servicio === 'Decoracion') idCol = 'id_decoracion'; 
 
-                if (servicio === 'Salon') { tabla = 'Salon'; campoNombre = 'nombre_lugar'; idCampo = 'id_salon'; }
-                else if (servicio === 'Decoracion') { tabla = 'Decoraciones'; campoNombre = 'nombre_item'; idCampo = 'id_decoracion'; }
-                else if (servicio === 'Catering') { tabla = 'Catering'; campoNombre = 'nombre_servicio'; idCampo = 'id_catering'; }
-                else if (servicio === 'Fotografo') { tabla = 'Fotografo'; campoNombre = 'nombre_servicio'; idCampo = 'id_fotografo'; }
-                else if (servicio === 'Planeador') { tabla = 'Planeador'; campoNombre = 'nombre_servicio'; idCampo = 'id_planeador'; }
-
-                query = `
-                    SELECT s.${campoNombre} as etiqueta, COUNT(r.id_reserva) as valor
-                    FROM Reserva r
-                    JOIN ${tabla} s ON r.fk_opcion_id = s.${idCampo}
-                    WHERE r.tipo_opcion = $1 AND r.estado_pago != 'Cancelado'
-                    GROUP BY s.${campoNombre}
-                    ORDER BY valor DESC
-                    LIMIT 5
-                `;
-                params = [servicio];
+                q = `SELECT s.${nameCol} as lbl, 
+                     COUNT(r.id_reserva) FILTER (WHERE r.estado_pago = 'Pendiente') as pendientes,
+                     COUNT(r.id_reserva) FILTER (WHERE r.estado_pago = 'Abonado') as abonados,
+                     COUNT(r.id_reserva) FILTER (WHERE r.estado_pago = 'Pagado Total') as pagados
+                     FROM ${tbl} s 
+                     LEFT JOIN Reserva r ON r.fk_opcion_id = s.${idCol} 
+                        AND r.tipo_opcion = $1 
+                        AND r.estado_pago != 'Cancelado'
+                     GROUP BY 1 
+                     ORDER BY (COUNT(r.id_reserva)) DESC 
+                     LIMIT 5`;
+                p = [servicio];
                 break;
 
             default:
-                return res.status(400).json({ error: 'Tipo de reporte no válido' });
+                return res.status(400).json({ error: 'Tipo no válido' });
         }
 
-        const result = await pool.query(query, params);
+        const result = await pool.query(q, p);
         
-        const etiquetas = result.rows.map(row => row.etiqueta.trim());
-        const valores = result.rows.map(row => parseInt(row.valor));
+        // --- PREPARAR RESPUESTA ---
+        const etiquetas = result.rows.map(r => (r.lbl || 'Sin Nombre').toString().trim());
+        
+        // Objeto base de respuesta
+        let respuesta = { etiquetas };
 
-        res.json({ etiquetas, valores });
+        // Si es un reporte simple (Usuarios, Demanda Mes)
+        if (tipo !== 'top-items') {
+            respuesta.valores = result.rows.map(r => parseInt(r.val || 0));
+        } 
+        // Si es reporte detallado (Top Items)
+        else {
+            respuesta.pendientes = result.rows.map(r => parseInt(r.pendientes || 0));
+            respuesta.abonados = result.rows.map(r => parseInt(r.abonados || 0));
+            respuesta.pagados = result.rows.map(r => parseInt(r.pagados || 0));
+        }
 
-    } catch (error) {
-        console.error('Error en reportes:', error);
-        res.status(500).json({ error: 'Error al generar reporte' });
+        res.json(respuesta);
+
+    } catch (e) { 
+        console.error(`Error en reporte ${tipo}:`, e); 
+        if (!res.headersSent) res.status(500).json({ error: 'Error interno' });
     }
 });
 
