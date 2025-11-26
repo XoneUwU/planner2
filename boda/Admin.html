@@ -9,7 +9,7 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            background-color: #f0f2f5; /* Fondo gris claro moderno */
+            background-color: #f0f2f5;
             color: #333;
             min-height: 100vh;
         }
@@ -55,7 +55,7 @@
 
         h1 { color: #444; margin-bottom: 30px; border-left: 5px solid #06831fc8; padding-left: 15px; }
 
-        /* --- TARJETAS (STATS) --- */
+        /* --- STATS CARDS --- */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -79,7 +79,7 @@
         /* --- GRID DE GRÁFICOS --- */
         .charts-section {
             display: grid;
-            grid-template-columns: repeat(2, 1fr); /* 2 Columnas por defecto */
+            grid-template-columns: repeat(2, 1fr);
             gap: 25px;
             margin-bottom: 40px;
         }
@@ -87,6 +87,7 @@
         .chart-box {
             background: white; padding: 25px; border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column; /* Asegura orden */
         }
         
         .chart-box h4 {
@@ -95,7 +96,7 @@
             display: flex; justify-content: space-between; align-items: center;
         }
 
-        /* Botones de Filtro (Día/Mes) */
+        /* Botones de Filtro */
         .filter-group button {
             background: #f8f9fa; border: 1px solid #ddd; padding: 5px 12px;
             border-radius: 5px; cursor: pointer; font-size: 0.85em; color: #666;
@@ -108,18 +109,24 @@
         @media (max-width: 900px) {
             .charts-section { grid-template-columns: 1fr !important; }
         }
+        
+        /* CLASE CLAVE: CONTENEDOR DE CANVAS */
+        /* Esto fuerza a que el gráfico respete la altura */
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            /* La altura se define inline en el HTML, pero esto ayuda */
+        }
     </style>
 </head>
 <body>
 
     <header class="top-bar">
-        <div class="logo-admin">
-            <h2>📊 Admin Panel</h2>
-        </div>
+        <div class="logo-admin"><h2>📊 Admin Panel</h2></div>
         <nav class="admin-menu">
             <a href="#" class="nav-btn active">Dashboard</a>
-            <a href="Principal.html" target="_blank" class="nav-btn">Ver Sitio Web</a>
-            <a href="Login.html" class="logout-btn">Cerrar Sesión</a>
+            <a href="home.html" target="_blank" class="nav-btn">Ver Sitio Web</a>
+            <a href="home.html" class="logout-btn">Cerrar Sesión</a>
         </nav>
     </header>
 
@@ -127,30 +134,20 @@
         <h1>Resumen General</h1>
 
         <div class="stats-grid">
-            <div class="stat-card">
-                <h3>Usuarios Registrados</h3>
-                <p id="totalUsers">...</p>
-            </div>
-            <div class="stat-card">
-                <h3>Cuentas de Pareja</h3>
-                <p id="totalCuentas">...</p>
-            </div>
-            <div class="stat-card">
-                <h3>Reservas Activas</h3>
-                <p id="totalReservas">...</p>
-            </div>
+            <div class="stat-card"><h3>Usuarios Registrados</h3><p id="totalUsers">...</p></div>
+            <div class="stat-card"><h3>Cuentas de Pareja</h3><p id="totalCuentas">...</p></div>
+            <div class="stat-card"><h3>Reservas Activas</h3><p id="totalReservas">...</p></div>
         </div>
 
         <div class="charts-section">
             <div class="chart-box" style="grid-column: 1 / -1;"> 
-                <h4>
-                    📈 Crecimiento de Usuarios
+                <h4>📈 Crecimiento de Usuarios
                     <div class="filter-group">
                         <button id="btnMes" onclick="cargarGraficoUsuarios('mes', this)" class="active">Por Mes</button>
                         <button id="btnDia" onclick="cargarGraficoUsuarios('dia', this)">Por Día</button>
                     </div>
                 </h4>
-                <div style="height: 300px;">
+                <div class="canvas-wrapper" style="height: 300px;">
                     <canvas id="chartUserCrecimiento"></canvas>
                 </div>
             </div>
@@ -158,12 +155,14 @@
 
         <div class="charts-section">
             <div class="chart-box">
-                <h4>🏛️ Demanda de Salones (Top Reservas)</h4>
-                <canvas id="chartMesSalon"></canvas>
+                <h4>🏛️ Top Salones Más Reservados</h4>
+                <div class="canvas-wrapper" style="height: 300px;">
+                    <canvas id="chartMesSalon"></canvas>
+                </div>
             </div>
             <div class="chart-box">
                 <h4>💰 Rangos de Presupuesto</h4>
-                <div style="height: 250px; display: flex; justify-content: center;">
+                <div class="canvas-wrapper" style="height: 250px; display: flex; justify-content: center;">
                     <canvas id="chartPresupuesto"></canvas>
                 </div>
             </div>
@@ -172,171 +171,175 @@
         <div class="charts-section">
             <div class="chart-box" style="grid-column: 1 / -1;">
                 <h4>🌸 Top Decoraciones Más Solicitadas</h4>
-                <div style="height: 300px;"> 
+                <div class="canvas-wrapper" style="height: 350px;"> 
                     <canvas id="chartTopDecoracion"></canvas>
                 </div>
             </div>
         </div>
 
         <div class="charts-section" style="grid-template-columns: repeat(3, 1fr);">
+            
             <div class="chart-box">
                 <h4>📸 Top Fotógrafos</h4>
-                <canvas id="chartTopFoto"></canvas>
+                <div class="canvas-wrapper" style="height: 250px;">
+                    <canvas id="chartTopFoto"></canvas>
+                </div>
             </div>
+
             <div class="chart-box">
                 <h4>🍽️ Top Catering</h4>
-                <div style="height: 200px; display: flex; justify-content: center;">
+                <div class="canvas-wrapper" style="height: 200px; display: flex; justify-content: center;">
                     <canvas id="chartTopCatering"></canvas>
                 </div>
             </div>
+
             <div class="chart-box">
                 <h4>📋 Top Planners</h4>
-                <canvas id="chartMesPlanner"></canvas>
+                <div class="canvas-wrapper" style="height: 250px;">
+                    <canvas id="chartMesPlanner"></canvas>
+                </div>
             </div>
         </div>
 
     </div>
-<script>
-    // Variables globales
-    let chartInstances = {};
 
-    // --- A. CARGAR NÚMEROS ---
-    fetch('http://localhost:3000/admin/stats')
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById('totalUsers').textContent = data.usuarios;
-            document.getElementById('totalCuentas').textContent = data.cuentas;
-            document.getElementById('totalReservas').textContent = data.reservas;
-        })
-        .catch(console.error);
+    <script>
+        let chartInstances = {}; 
 
-    // --- B. GRÁFICO DE USUARIOS ---
-    async function cargarGraficoUsuarios(periodo, btn) {
-        if(btn) {
-            document.querySelectorAll('.filter-group button').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+        // 1. CARGAR NÚMEROS
+        fetch('http://localhost:3000/admin/stats')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('totalUsers').textContent = data.usuarios;
+                document.getElementById('totalCuentas').textContent = data.cuentas;
+                document.getElementById('totalReservas').textContent = data.reservas;
+            }).catch(console.error);
+
+        // 2. USUARIOS
+        async function cargarGraficoUsuarios(periodo, btn) {
+            if(btn) {
+                document.querySelectorAll('.filter-group button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+            try {
+                const res = await fetch(`http://localhost:3000/admin/reportes/usuarios-crecimiento?periodo=${periodo}`);
+                const data = await res.json();
+                const ctx = document.getElementById('chartUserCrecimiento').getContext('2d');
+                if (chartInstances['users']) chartInstances['users'].destroy();
+
+                chartInstances['users'] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.etiquetas,
+                        datasets: [{
+                            label: 'Nuevos Registros', data: data.valores,
+                            borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                            fill: true, tension: 0.4
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            } catch(e) { console.error(e); }
         }
-        try {
-            const res = await fetch(`http://localhost:3000/admin/reportes/usuarios-crecimiento?periodo=${periodo}`);
-            const data = await res.json();
-            const ctx = document.getElementById('chartUserCrecimiento').getContext('2d');
-            if (chartInstances['users']) chartInstances['users'].destroy();
 
-            chartInstances['users'] = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.etiquetas,
-                    datasets: [{
-                        label: 'Nuevos Registros',
-                        data: data.valores,
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52, 152, 219, 0.2)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-        } catch(e) { console.error(e); }
-    }
+        // 3. PRESUPUESTO (TORTA)
+        async function cargarGraficoPresupuesto() {
+            try {
+                const res = await fetch(`http://localhost:3000/admin/reportes/usuarios-presupuesto`);
+                const data = await res.json();
+                if(!data.etiquetas || data.etiquetas.length === 0) return;
+                const ctx = document.getElementById('chartPresupuesto').getContext('2d');
+                if (chartInstances['presupuesto']) chartInstances['presupuesto'].destroy();
 
-    // --- C. GRÁFICO APILADO TRICOLOR (NUEVO: SIRVE PARA SALON Y DECORACION) ---
-    async function cargarGraficoApilado(endpoint, canvasId, esHorizontal = false) {
-        try {
-            const res = await fetch(`http://localhost:3000/admin/reportes/${endpoint}`);
-            const data = await res.json();
-
-            // Si no hay etiquetas, el gráfico fallará, así que paramos
-            if(!data.etiquetas || data.etiquetas.length === 0) return;
-
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.etiquetas,
-                    datasets: [
-                        {
-                            label: 'Guardado (Pendiente)',
-                            data: data.pendientes, 
-                            backgroundColor: '#3498db', // Azul
-                        },
-                        {
-                            label: 'Con Adelanto',
-                            data: data.abonados, 
-                            backgroundColor: '#f39c12', // Naranja
-                        },
-                        {
-                            label: 'Pagado Total',
-                            data: data.pagados,
-                            backgroundColor: '#2ecc71', // Verde
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    indexAxis: esHorizontal ? 'y' : 'x', // Soporte horizontal para nombres largos
-                    scales: {
-                        x: { stacked: true },
-                        y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } }
+                chartInstances['presupuesto'] = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.etiquetas,
+                        datasets: [{
+                            data: data.valores,
+                            backgroundColor: ['#06831fc8', '#3498db', '#f1c40f', '#e74c3c', '#9b59b6'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: { 
+                        responsive: true, maintainAspectRatio: false, // ESTO EVITA QUE CREZCA
+                        plugins: { legend: { position: 'right' } } 
                     }
-                }
-            });
-        } catch(e) { console.error(e); }
-    }
+                });
+            } catch(e) { console.error(e); }
+        }
 
-    // --- D. GRÁFICOS SIMPLES (DONAS/PASTELES) ---
-    async function cargarGraficoSimple(endpoint, canvasId, tipo, label) {
-        try {
-            const res = await fetch(`http://localhost:3000/admin/reportes/${endpoint}`);
-            const data = await res.json();
-            if(!data.etiquetas || data.etiquetas.length === 0) return;
+        // 4. GRÁFICOS APILADOS (SERVICIOS)
+        async function cargarGraficoServicio(endpoint, canvasId, esHorizontal = false) {
+            try {
+                const res = await fetch(`http://localhost:3000/admin/reportes/${endpoint}`);
+                const data = await res.json();
+                if(!data.etiquetas || data.etiquetas.length === 0) return;
 
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            const bgColors = ['#06831fc8', '#3498db', '#f1c40f', '#e74c3c', '#9b59b6'];
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.etiquetas,
+                        datasets: [
+                            { label: 'Guardado', data: data.pendientes, backgroundColor: '#3498db' },
+                            { label: 'Abonado', data: data.abonados, backgroundColor: '#f39c12' },
+                            { label: 'Pagado', data: data.pagados, backgroundColor: '#2ecc71' }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false, // ESTO EVITA QUE CREZCA
+                        indexAxis: esHorizontal ? 'y' : 'x',
+                        scales: {
+                            x: { stacked: true },
+                            y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } }
+                        }
+                    }
+                });
+            } catch(e) { console.error(e); }
+        }
 
-            new Chart(ctx, {
-                type: tipo,
-                data: {
-                    labels: data.etiquetas,
-                    datasets: [{
-                        label: label,
-                        data: data.valores,
-                        backgroundColor: bgColors,
-                        borderWidth: 1
-                    }]
-                },
-                options: { 
-                    responsive: true,
-                    maintainAspectRatio: false, // Para que las donas obedezcan al div pequeño
-                    plugins: { legend: { position: 'right' } }
-                }
-            });
-        } catch(e) { console.error(e); }
-    }
+        // 5. CATERING (DONA)
+        async function cargarGraficoCatering() {
+            try {
+                const res = await fetch(`http://localhost:3000/admin/reportes/top-items?servicio=Catering`);
+                const data = await res.json();
+                if(!data.etiquetas || data.etiquetas.length === 0) return;
 
-    // --- E. INICIALIZACIÓN ---
-    
-    cargarGraficoUsuarios('mes', document.getElementById('btnMes'));
+                const ctx = document.getElementById('chartTopCatering').getContext('2d');
+                
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.etiquetas,
+                        datasets: [{
+                            data: data.pagados.map((p, i) => p + data.pendientes[i] + data.abonados[i]), // Sumamos todo para el total
+                            backgroundColor: ['#06831fc8', '#3498db', '#f1c40f', '#e74c3c', '#9b59b6']
+                        }]
+                    },
+                    options: { 
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'right' } } 
+                    }
+                });
+            } catch(e) { console.error(e); }
+        }
 
-    // 1. Presupuesto (Dona)
-    cargarGraficoSimple('usuarios-presupuesto', 'chartPresupuesto', 'doughnut', 'Usuarios');
+        // --- INICIALIZACIÓN ---
+        cargarGraficoUsuarios('mes', document.getElementById('btnMes'));
+        cargarGraficoPresupuesto();
+        
+        // Barras Apiladas
+        cargarGraficoServicio('top-items?servicio=Salon', 'chartMesSalon', false);
+        cargarGraficoServicio('top-items?servicio=Decoracion', 'chartTopDecoracion', true);
+        cargarGraficoServicio('top-items?servicio=Fotografo', 'chartTopFoto', false);
+        cargarGraficoServicio('top-items?servicio=Planeador', 'chartMesPlanner', false);
+        
+        // Catering
+        cargarGraficoCatering();
 
-    // 2. Salones (Apilado Vertical - Azul/Naranja/Verde)
-    cargarGraficoApilado('top-items?servicio=Salon', 'chartMesSalon', false);
-
-    // 3. Decoraciones (Apilado HORIZONTAL - Azul/Naranja/Verde)
-    // Nota: 'true' al final lo hace horizontal para leer mejor los nombres
-    cargarGraficoApilado('top-items?servicio=Decoracion', 'chartTopDecoracion', true);
-
-    // 4. Resto (También los pasamos al formato apilado para consistencia)
-    cargarGraficoApilado('top-items?servicio=Fotografo', 'chartTopFoto', false);
-    cargarGraficoApilado('top-items?servicio=Planeador', 'chartMesPlanner', false);
-    
-    // Catering se ve mejor en Dona
-    cargarGraficoSimple('top-items?servicio=Catering', 'chartTopCatering', 'doughnut', 'Platos');
-
-</script>
+    </script>
 </body>
 </html>
