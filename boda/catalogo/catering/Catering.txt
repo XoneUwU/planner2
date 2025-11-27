@@ -1,0 +1,12 @@
+nombre_servicio;descripcion;costo_base;departamento;regla_pago_meses
+Casa Jardín - Catering y Eventos;Mesas temáticas especializadas en quesos, charcutería y frutas frescas. Ofrecen gastronomía de primera con opciones de carnes y postres. Precio por persona.;240;Cochabamba;5
+CocinARTE;Servicio integral de catering y eventos. Ofrecen banquetes y menú internacional/regional con organización y coordinación completa de bodas. Precio por persona.;280;La Paz;6
+Catering Isabel Mercado;Servicio de catering premium especializado en bocaditos, cocteles y mesas de dulces. Considerado un servicio de alta gama en Santa Cruz. Precio por persona.;280;Santa Cruz;6
+Jimena Rico Toro - Catering;Alta cocina con innovación, estilo y variedad. Ofrece menús internacionales y de fusión con foco en elegancia y foodstyling. Precio por persona.;310;Beni;6
+TU Llajua - Catering & Eventos;Catering para todo tipo de evento. Se especializa en menús de cena, bodas y banquetes. Precio por persona.;180;Oruro;3
+Tenka's Catering y Eventos;Servicio de catering y organización de eventos en Tarija. Especializados en tablitas charcuteras y banquetería de alta calidad;250;Tarija;5
+Azafrán Restaurant & Catering;Vanguardistas en servicios gastronómicos integrales con platos estrella y cocina de toda la vida equilibrados. Ofrece servicio de catering. Precio por persona.;260;Chuquisaca;5
+Ale Peredo Chef;Chef con más de 20 años de experiencia en catering para bodas, corporativos y sociales. Ofrece servicio de almuerzos caseros/saludables y banquetes completos. Precio por persona.;220;Santa Cruz;4
+Festín Catering & Eventos;Catering de lujo en Sucre, con menú variado para banquetes. Especializado en servicios gastronómicos de alta gama.;290;Chuquisaca;6
+Musef Catering;Servicio de catering muy profesional que atiende eventos sociales de tamaño variado. Ofrece un menú diverso para banquetes y recepciones.;230;La Paz;5
+Espy's Catering;Servicio de catering variado y profesional para eventos sociales de diverso tamaño, ofreciendo opciones para todo tipo de celebraciones.;270;Santa Cruz;5

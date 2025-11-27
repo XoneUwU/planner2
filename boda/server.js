@@ -820,12 +820,12 @@ app.post('/pagar-reserva', async (req, res) => {
     }
 });
 // ==================================================================
-// 10. RUTA ADMIN: AGREGAR PRODUCTO
+// 10. RUTA ADMIN: AGREGAR PRODUCTO (VERSIÓN TEXTO SIMPLE)
 // ==================================================================
 app.post('/admin/agregar-producto', async (req, res) => {
     const { 
-        tipo, // 'Salon', 'Decoracion', 'Catering', 'Fotografo', 'Planeador'
-        nombre, costo, depto, imagen, regla, // Campos comunes
+        tipo, // 'Salon', 'Decoracion', etc.
+        nombre, costo, depto, imagen, regla, // 'imagen' es solo el nombre del archivo (ej: foto.jpg)
         // Campos específicos
         color, capacidad, mesas, cubiertos, descripcion 
     } = req.body;
@@ -834,44 +834,116 @@ app.post('/admin/agregar-producto', async (req, res) => {
     try {
         await client.query('BEGIN');
         
+        // 1. CONSTRUIR LA RUTA AUTOMÁTICA
+        let subcarpeta = '';
+        if (tipo === 'Salon') subcarpeta = 'salon';
+        else if (tipo === 'Decoracion') subcarpeta = 'decoracion';
+        else if (tipo === 'Catering') subcarpeta = 'catering';
+        else if (tipo === 'Fotografo') subcarpeta = 'fotografo';
+        else if (tipo === 'Planeador') subcarpeta = 'planeador'; // Asegúrate de que coincida con tu carpeta real
+
+        // Si el usuario escribió "foto.jpg", guardamos "catalogo/salon/foto.jpg"
+        // Si el usuario ya escribió "catalogo/...", respetamos lo que escribió
+        let urlFinal = imagen;
+        if (!imagen.startsWith('catalogo/')) {
+            urlFinal = `catalogo/${subcarpeta}/${imagen}`;
+        }
+
+        // 2. INSERTAR EN LA TABLA CORRECTA
         let query = '';
         let params = [];
 
-        // 1. Lógica para DECORACIONES
         if (tipo === 'Decoracion') {
             query = `INSERT INTO Decoraciones (nombre_item, costo_base, departamento, url_imagen, regla_pago_meses, descripcion, color) 
                      VALUES ($1, $2, $3, $4, $5, $6, $7)`;
-            params = [nombre, costo, depto, imagen, regla, descripcion, color]; 
+            params = [nombre, costo, depto, urlFinal, regla, descripcion, color]; 
         } 
-        // 2. Lógica para SALONES
         else if (tipo === 'Salon') {
             query = `INSERT INTO Salon (nombre_lugar, costo_base, departamento, url_imagen, regla_pago_meses, capacidad, incluye_mesas, incluye_cubiertos) 
                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`;
-            // Convertir checkbox a booleanos
-            const bMesas = (mesas === true || mesas === 'on');
-            const bCubiertos = (cubiertos === true || cubiertos === 'on');
-            params = [nombre, costo, depto, imagen, regla, capacidad, bMesas, bCubiertos];
+            params = [nombre, costo, depto, urlFinal, regla, capacidad, mesas, cubiertos];
         } 
-        // 3. Lógica para OTROS (Catering, Fotografo, Planeador)
         else {
-            let tabla = tipo; // El nombre de la tabla coincide con el tipo
+            let tabla = tipo; // 'Catering', 'Fotografo', etc.
             query = `INSERT INTO ${tabla} (nombre_servicio, costo_base, departamento, url_imagen, regla_pago_meses, descripcion) 
                      VALUES ($1, $2, $3, $4, $5, $6)`;
-            params = [nombre, costo, depto, imagen, regla, descripcion];
+            params = [nombre, costo, depto, urlFinal, regla, descripcion];
         }
 
         await client.query(query, params);
         await client.query('COMMIT');
-        res.json({ success: true, message: 'Producto agregado exitosamente' });
+        res.json({ success: true, message: 'Producto agregado correctamente' });
 
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Error agregando producto:', error);
-        res.status(500).json({ success: false, message: 'Error al guardar en base de datos.' });
+        res.status(500).json({ success: false, message: 'Error en base de datos: ' + error.message });
     } finally {
         client.release();
     }
-});   
+});
+// ==================================================================
+// 11. RUTA ADMIN: ELIMINAR PRODUCTO
+// ==================================================================
+app.post('/admin/eliminar-producto', async (req, res) => {
+    const { tipo, id } = req.body;
+
+    let tabla = '', idCol = '';
+    if (tipo === 'Salon') { tabla = 'Salon'; idCol = 'id_salon'; }
+    else if (tipo === 'Decoracion') { tabla = 'Decoraciones'; idCol = 'id_decoracion'; }
+    else if (tipo === 'Catering') { tabla = 'Catering'; idCol = 'id_catering'; }
+    else if (tipo === 'Fotografo') { tabla = 'Fotografo'; idCol = 'id_fotografo'; }
+    else if (tipo === 'Planeador') { tabla = 'Planeador'; idCol = 'id_planeador'; }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Verificar si hay reservas activas ligadas a este producto
+        // (Si borras un salón reservado, dejas a una novia sin salón)
+        const checkReservas = await client.query(
+            `SELECT COUNT(*) as total FROM Reserva 
+             WHERE tipo_opcion = $1 AND fk_opcion_id = $2 AND estado_pago != 'Cancelado'`,
+            [tipo, id]
+        );
+
+        if (parseInt(checkReservas.rows[0].total) > 0) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ success: false, message: 'No se puede eliminar: Hay reservas activas usando este producto.' });
+        }
+
+        // 2. Eliminar (Si no hay reservas o solo canceladas)
+        await client.query(`DELETE FROM ${tabla} WHERE ${idCol} = $1`, [id]);
+
+        // 3. (OPCIONAL) Resetear secuencia ID? -> NO RECOMENDADO POR SEGURIDAD
+        
+        await client.query('COMMIT');
+        res.json({ success: true, message: 'Producto eliminado.' });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Error al eliminar.' });
+    } finally {
+        client.release();
+    }
+});
+// RUTA SIMPLE PARA LISTAR PRODUCTOS (ADMIN)
+app.get('/admin/listar-productos', async (req, res) => {
+    const { tipo } = req.query;
+    try {
+        let tabla = '';
+        if (tipo === 'Salon') tabla = 'Salon';
+        else if (tipo === 'Decoracion') tabla = 'Decoraciones';
+        else if (tipo === 'Catering') tabla = 'Catering';
+        else if (tipo === 'Fotografo') tabla = 'Fotografo';
+        else if (tipo === 'Planeador') tabla = 'Planeador';
+        else return res.json([]);
+
+        const result = await pool.query(`SELECT * FROM ${tabla} ORDER BY 1 DESC`);
+        res.json(result.rows);
+    } catch (e) { res.status(500).json([]); }
+});
 // ==================================================================
 // 8. RUTA DE REPORTES (ACTUALIZADA Y CORREGIDA)
 // ==================================================================

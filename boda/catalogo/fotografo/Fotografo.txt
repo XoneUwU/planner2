@@ -1,0 +1,21 @@
+nombre_servicio;descripcion;costo_base;departamento;regla_pago_meses
+Focusmile - BODAS Reportaje SC;Cobertura fotográfica integral (12 horas), desde el arreglo personal hasta el final de la fiesta. Entrega de 800 fotos retocadas en alta resolución y galería digital privada.;9800;Santa Cruz;8
+Focusmile - BODAS Sesión Viñedos;Cobertura fotográfica de 8 horas, especializada en bodas al aire libre y eventos campestres en Tarija. Incluye retrato de novios al atardecer en los viñedos.;7900;Tarija;6
+Focusmile - PRE BODAS & Compromisos;Sesión fotográfica de pareja en locaciones exclusivas del Altiplano o zonas coloniales (3 horas). Incluye 60 fotografías editadas, ideal para invitaciones o Save The Date.;2500;La Paz;2
+Focusmile - POST BODAS (Salar);Sesión creativa y divertida después del evento en locaciones extremas. Incluye dirección artística para un resultado único, con enfoque en paisajes mineros o altiplánicos.;4200;Potosí;3
+Focusmile - ELOPEMENT Wedding LP;Cobertura documental de 6 horas para bodas íntimas o fugas. Enfoque en la emoción y el paisaje.;6500;La Paz;6
+Wilder Córdova - Cobertura Estándar;Cobertura total de 6 horas, enfocada en ceremonia y recepción. Incluye post-producción profesional de las mejores fotografías.;2800;Cochabamba;3
+Josué Hernández - Cobertura Completa 12h;Cobertura integral de 12 horas, desde los preparativos matinales hasta el final de la fiesta. Ideal para bodas en locaciones coloniales de Sucre.;1500;Chuquisaca;6
+Pablo Bravo Fotografía;Paquete Platinum: Cobertura de boda completa (14 horas) por dos fotógrafos, incluyendo álbum de diseño de lujo y sesión pre-boda.;12000;Santa Cruz;10
+Jorge Pacheco - Cobertura 8h;Cobertura de evento (8 horas), con especialidad en fotografía de bodas.;6000;La Paz;6
+Jose Gabriel De Los Ríos - Cobertura 6h;Reportaje de boda por hora (6 horas). Enfocado en la cobertura documental del evento.;3000;Chuquisaca;3
+Saúl Rojas Hernández - Cobertura 8h;Reportaje de boda por hora (8 horas). Enfoque documental y emocional.;8400;Santa Cruz;6
+Anderson Takara - Postboda Salar 3h;Sesión fotográfica especializada en postbodas en el Salar de Uyuni (3 horas).;17275;Potosí;6
+Pankkara Larrea - Cobertura 8h;Cobertura de evento (8 horas), con énfasis en bodas y fotografía de parejas.;6500;La Paz;6
+Michael Céspedes - Cobertura 8h;Reportaje de boda por hora (8 horas). Enfoque documental.;9248;Cochabamba;6
+Adrián Bailey - Cobertura 8h;Reportaje de boda por hora (8 horas). Fotógrafo con enfoque en viajes y estilo documental.;8000;Santa Cruz;6
+Daniela Huet - Cobertura 8h;Reportaje de boda por hora (8 horas). Enfoque documental y especialidad en bodas.;4800;La Paz;4
+Carlos Otondo - Cobertura 8h;Reportaje de boda por hora (8 horas). Captura de emociones y sentimientos.;5728;Santa Cruz;5
+Franz Zegarra - Cobertura 8h;Reportaje de boda por hora (8 horas). Retratar las emociones del momento.;12400;Tarija;8
+Lauren Wille Arzabe - Cobertura 10h;Cobertura de evento profesional (10 horas) con enfoque en fotografías matrimoniales.;10375;Santa Cruz;7
+Bruno Soliz Rocha(Mira-Studio) - Cobertura 8h;Reportaje de boda por hora (8 horas). La fotografía como un poema escrito con luz y corazón.;7600;Cochabamba;6

@@ -8,337 +8,408 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            background-color: #f0f2f5;
-            color: #333;
-            min-height: 100vh;
+            margin: 0; background-color: #f0f2f5; color: #333; min-height: 100vh;
         }
 
         /* --- BARRA SUPERIOR --- */
         .top-bar {
-            background-color: #ffffff;
-            padding: 15px 40px;
+            background-color: #ffffff; 
+            padding: 15px 40px; 
             border-bottom: 1px solid #ddd;
-            display: flex;
-            justify-content: space-between;
+            display: flex; 
+            justify-content: space-between; 
             align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
-
-        .logo-admin h2 {
-            margin: 0; color: #06831fc8; font-size: 1.5em; display: flex; align-items: center; gap: 10px;
-        }
-
-        .admin-menu { display: flex; gap: 20px; align-items: center; }
-
-        .nav-btn {
-            text-decoration: none; color: #555; font-weight: 600;
-            padding: 8px 15px; border-radius: 8px; transition: 0.3s;
-        }
-        .nav-btn:hover { background-color: #f0f0f0; color: #06831fc8; }
-        .nav-btn.active { background-color: #e8f5e9; color: #06831fc8; }
+        .logo-admin h2 { margin: 0; color: #06831fc8; font-size: 1.5em; display: flex; align-items: center; gap: 10px; }
         
-        .logout-btn {
-            background-color: #e74c3c; color: white; padding: 8px 20px;
-            border-radius: 20px; text-decoration: none; font-weight: bold;
-            transition: 0.3s;
-        }
+        .admin-menu { display: flex; gap: 20px; align-items: center; }
+        .nav-btn { text-decoration: none; color: #555; font-weight: 600; padding: 8px 15px; transition: 0.3s; }
+        .nav-btn:hover { background-color: #f0f0f0; color: #06831fc8; }
+        
+        .logout-btn { background-color: #e74c3c; color: white; padding: 8px 20px; border-radius: 20px; text-decoration: none; font-weight: bold; transition: 0.3s; }
         .logout-btn:hover { background-color: #c0392b; }
 
         /* --- CONTENEDOR PRINCIPAL --- */
-        .main-container {
-            max-width: 1200px; margin: 40px auto; padding: 0 20px;
+        .main-container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+
+        /* --- SISTEMA DE PESTAÑAS ADMIN --- */
+        .admin-tabs {
+            display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd;
+        }
+        .tab-link {
+            padding: 12px 25px; background: #e9ecef; border: none; border-radius: 8px 8px 0 0;
+            font-size: 1em; font-weight: bold; color: #555; cursor: pointer; transition: 0.3s;
+        }
+        .tab-link:hover { background: #dde1e3; }
+        .tab-link.active {
+            background: #06831fc8; color: white;
+            transform: translateY(2px); /* Efecto visual conectado */
         }
 
-        h1 { color: #444; margin-bottom: 30px; border-left: 5px solid #06831fc8; padding-left: 15px; }
+        /* Contenedores de Vistas */
+        .view-section { display: none; animation: fadeIn 0.3s; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- STATS CARDS --- */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-
-        .stat-card {
-            background: white; padding: 25px; border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center;
-            transition: transform 0.3s; position: relative; overflow: hidden;
-        }
-        .stat-card:hover { transform: translateY(-5px); }
-        .stat-card::before {
-            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 5px;
-            background: linear-gradient(90deg, #06831fc8, #3498db);
-        }
+        /* --- ESTILOS KPI (VISTA 1) --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; position: relative; overflow: hidden; }
+        .stat-card::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 5px; background: linear-gradient(90deg, #06831fc8, #3498db); }
         .stat-card h3 { margin: 0; color: #888; font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; }
         .stat-card p { margin: 10px 0 0; font-size: 3em; font-weight: 700; color: #2c3e50; }
 
-        /* --- GRID DE GRÁFICOS --- */
-        .charts-section {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-
-        .chart-box {
-            background: white; padding: 25px; border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            display: flex; flex-direction: column; /* Asegura orden */
-        }
+        .charts-section { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-bottom: 40px; }
+        .chart-box { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .chart-box h4 { margin-top: 0; color: #555; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .canvas-wrapper { position: relative; width: 100%; }
         
-        .chart-box h4 {
-            margin-top: 0; color: #555; border-bottom: 1px solid #eee;
-            padding-bottom: 15px; margin-bottom: 20px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-
-        /* Botones de Filtro */
-        .filter-group button {
-            background: #f8f9fa; border: 1px solid #ddd; padding: 5px 12px;
-            border-radius: 5px; cursor: pointer; font-size: 0.85em; color: #666;
-            transition: 0.2s;
-        }
-        .filter-group button:hover { background: #e2e6ea; }
+        .filter-group button { background: #f8f9fa; border: 1px solid #ddd; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85em; color: #666; }
         .filter-group button.active { background: #06831fc8; color: white; border-color: #06831fc8; }
 
-        /* Responsividad */
-        @media (max-width: 900px) {
-            .charts-section { grid-template-columns: 1fr !important; }
+        /* --- ESTILOS GESTIÓN (VISTA 2) --- */
+        .inventory-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+            background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
-        
-        /* CLASE CLAVE: CONTENEDOR DE CANVAS */
-        /* Esto fuerza a que el gráfico respete la altura */
-        .canvas-wrapper {
-            position: relative;
-            width: 100%;
-            /* La altura se define inline en el HTML, pero esto ayuda */
+        .add-btn { 
+            background-color: #3498db; color: white; padding: 12px 25px; border-radius: 30px; 
+            text-decoration: none; font-weight: bold; border: none; cursor: pointer; 
+            display: flex; align-items: center; gap: 8px; transition: 0.3s; font-size: 15px;
         }
+        .add-btn:hover { background-color: #2980b9; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4); }
+
+        .inventory-table-container {
+            background: white; border-radius: 15px; padding: 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow-x: auto;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th { padding: 15px; border-bottom: 2px solid #eee; color: #555; text-align: left; }
+        td { padding: 15px; border-bottom: 1px solid #eee; color: #333; vertical-align: middle; }
+        tr:hover { background-color: #f9f9f9; }
+
+        /* --- MODAL FORMULARIO --- */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); backdrop-filter: blur(3px); justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 500px; max-width: 90%; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .close { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: #aaa; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; font-size: 0.9em; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 1em; }
+        .hidden { display: none; }
+        .submit-btn { width: 100%; padding: 12px; background: #06831fc8; color: white; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer; margin-top: 10px; font-weight: bold; }
+
+        @media (max-width: 900px) { .charts-section { grid-template-columns: 1fr !important; } }
     </style>
 </head>
 <body>
 
     <header class="top-bar">
-        <div class="logo-admin"><h2>📊 Admin Panel</h2></div>
+        <div class="logo-admin"><h2>🔒 Panel Admin</h2></div>
         <nav class="admin-menu">
-            <a href="#" class="nav-btn active">Dashboard</a>
             <a href="home.html" target="_blank" class="nav-btn">Ver Sitio Web</a>
-            <a href="home.html" class="logout-btn">Cerrar Sesión</a>
+            <a href="Login.html" class="logout-btn">Cerrar Sesión</a>
         </nav>
     </header>
 
     <div class="main-container">
-        <h1>Resumen General</h1>
-
-        <div class="stats-grid">
-            <div class="stat-card"><h3>Usuarios Registrados</h3><p id="totalUsers">...</p></div>
-            <div class="stat-card"><h3>Cuentas de Pareja</h3><p id="totalCuentas">...</p></div>
-            <div class="stat-card"><h3>Reservas Activas</h3><p id="totalReservas">...</p></div>
+        
+        <div class="admin-tabs">
+            <button class="tab-link active" onclick="switchAdminTab('viewKPIs', this)">📊 Dashboard y Reportes</button>
+            <button class="tab-link" onclick="switchAdminTab('viewGestion', this)">📦 Gestión de Inventario</button>
         </div>
 
-        <div class="charts-section">
-            <div class="chart-box" style="grid-column: 1 / -1;"> 
-                <h4>📈 Crecimiento de Usuarios
-                    <div class="filter-group">
-                        <button id="btnMes" onclick="cargarGraficoUsuarios('mes', this)" class="active">Por Mes</button>
-                        <button id="btnDia" onclick="cargarGraficoUsuarios('dia', this)">Por Día</button>
-                    </div>
-                </h4>
-                <div class="canvas-wrapper" style="height: 300px;">
-                    <canvas id="chartUserCrecimiento"></canvas>
-                </div>
+        <div id="viewKPIs" class="view-section active">
+            <div class="stats-grid">
+                <div class="stat-card"><h3>Usuarios</h3><p id="totalUsers">...</p></div>
+                <div class="stat-card"><h3>Cuentas</h3><p id="totalCuentas">...</p></div>
+                <div class="stat-card"><h3>Reservas</h3><p id="totalReservas">...</p></div>
             </div>
-        </div>
 
-        <div class="charts-section">
-            <div class="chart-box">
-                <h4>🏛️ Top Salones Más Reservados</h4>
-                <div class="canvas-wrapper" style="height: 300px;">
-                    <canvas id="chartMesSalon"></canvas>
+            <div class="charts-section">
+                <div class="chart-box" style="grid-column: 1 / -1;"> 
+                    <h4>📈 Crecimiento de Usuarios
+                        <div class="filter-group"><button onclick="cargarGraficoUsuarios('mes', this)" class="active">Por Mes</button><button onclick="cargarGraficoUsuarios('dia', this)">Por Día</button></div>
+                    </h4>
+                    <div class="canvas-wrapper" style="height: 300px;"><canvas id="chartUserCrecimiento"></canvas></div>
                 </div>
             </div>
-            <div class="chart-box">
-                <h4>💰 Rangos de Presupuesto</h4>
-                <div class="canvas-wrapper" style="height: 250px; display: flex; justify-content: center;">
-                    <canvas id="chartPresupuesto"></canvas>
-                </div>
-            </div>
-        </div>
 
-        <div class="charts-section">
-            <div class="chart-box" style="grid-column: 1 / -1;">
-                <h4>🌸 Top Decoraciones Más Solicitadas</h4>
-                <div class="canvas-wrapper" style="height: 350px;"> 
-                    <canvas id="chartTopDecoracion"></canvas>
-                </div>
+            <div class="charts-section">
+                <div class="chart-box"><h4>🏛️ Top Salones (Actividad)</h4><div class="canvas-wrapper" style="height: 300px;"><canvas id="chartMesSalon"></canvas></div></div>
+                <div class="chart-box"><h4>💰 Presupuesto</h4><div class="canvas-wrapper" style="height: 250px; display:flex; justify-content:center;"><canvas id="chartPresupuesto"></canvas></div></div>
+            </div>
+
+            <div class="charts-section">
+                <div class="chart-box" style="grid-column: 1 / -1;"><h4>🌸 Top Decoraciones</h4><div class="canvas-wrapper" style="height: 350px;"><canvas id="chartTopDecoracion"></canvas></div></div>
+            </div>
+
+            <div class="charts-section" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="chart-box"><h4>📸 Fotógrafos</h4><div class="canvas-wrapper" style="height: 250px;"><canvas id="chartTopFoto"></canvas></div></div>
+                <div class="chart-box"><h4>🍽️ Catering</h4><div class="canvas-wrapper" style="height: 200px; display:flex; justify-content:center;"><canvas id="chartTopCatering"></canvas></div></div>
+                <div class="chart-box"><h4>📋 Planners</h4><div class="canvas-wrapper" style="height: 250px;"><canvas id="chartMesPlanner"></canvas></div></div>
             </div>
         </div>
 
-        <div class="charts-section" style="grid-template-columns: repeat(3, 1fr);">
-            
-            <div class="chart-box">
-                <h4>📸 Top Fotógrafos</h4>
-                <div class="canvas-wrapper" style="height: 250px;">
-                    <canvas id="chartTopFoto"></canvas>
+        <div id="viewGestion" class="view-section">
+            <div class="inventory-header">
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <h2 style="margin:0; color:#34495e;">Inventario</h2>
+                    <select id="selectTipoInventario" onchange="cargarInventario()" style="padding:8px; border-radius:5px; border:1px solid #ccc;">
+                        <option value="Salon">Salones</option>
+                        <option value="Decoracion">Decoración</option>
+                        <option value="Catering">Catering</option>
+                        <option value="Fotografo">Fotografía</option>
+                        <option value="Planeador">Planeadores</option>
+                    </select>
                 </div>
+                <button class="add-btn" onclick="abrirModalProducto()">➕ Nuevo Producto</button>
             </div>
 
-            <div class="chart-box">
-                <h4>🍽️ Top Catering</h4>
-                <div class="canvas-wrapper" style="height: 200px; display: flex; justify-content: center;">
-                    <canvas id="chartTopCatering"></canvas>
-                </div>
-            </div>
-
-            <div class="chart-box">
-                <h4>📋 Top Planners</h4>
-                <div class="canvas-wrapper" style="height: 250px;">
-                    <canvas id="chartMesPlanner"></canvas>
-                </div>
+            <div class="inventory-table-container">
+                <table id="tablaProductos">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Imagen</th>
+                            <th>Nombre</th>
+                            <th>Costo Base</th>
+                            <th>Ubicación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyInventario">
+                        </tbody>
+                </table>
             </div>
         </div>
 
     </div>
 
+    <div id="modalProducto" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('modalProducto').style.display='none'">&times;</span>
+            <h2 style="text-align: center; color: #2c3e50; margin-top: 0;">Nuevo Producto</h2>
+            
+            <form id="formProducto">
+                <div class="form-group">
+                    <label>Tipo de Servicio</label>
+                    <select id="newTipo" onchange="cambiarFormulario()">
+                        <option value="Salon">Salón de Eventos</option>
+                        <option value="Decoracion">Decoración</option>
+                        <option value="Catering">Catering</option>
+                        <option value="Fotografo">Fotografía</option>
+                        <option value="Planeador">Planeador</option>
+                    </select>
+                </div>
+
+                <div class="form-group"><label>Nombre</label><input type="text" id="newNombre" required></div>
+                <div class="form-group"><label>Costo (Bs)</label><input type="number" id="newCosto" required min="0"></div>
+                <div class="form-group">
+                    <label>Departamento</label>
+                    <select id="newDepto">
+                        <option value="Cochabamba">Cochabamba</option>
+                        <option value="Santa Cruz">Santa Cruz</option>
+                        <option value="La Paz">La Paz</option>
+                        <option value="Tarija">Tarija</option>
+                        <option value="Chuquisaca">Chuquisaca</option>
+                        <option value="Potosí">Potosí</option>
+                        <option value="Oruro">Oruro</option>
+                        <option value="Beni">Beni</option>
+                        <option value="Pando">Pando</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Nombre de Imagen (ej: foto.jpg)</label>
+                    <input type="text" id="newImagen" placeholder="catalogo/salon/foto.jpg" required>
+                    <small style="color:#888;">Asegúrate de poner el archivo en la carpeta del proyecto.</small>
+                </div>
+
+                <div class="form-group"><label>Regla de Pago (Meses)</label><input type="number" id="newRegla" value="1" min="0"></div>
+
+                <div id="fieldCapacidad" class="form-group"><label>Capacidad</label><input type="number" id="newCapacidad"></div>
+                <div id="fieldExtrasSalon" class="form-group">
+                    <label style="display:inline; margin-right:15px;"><input type="checkbox" id="newMesas"> Incluye Mesas</label>
+                    <label style="display:inline;"><input type="checkbox" id="newCubiertos"> Incluye Cubiertos</label>
+                </div>
+
+                <div id="fieldColor" class="form-group hidden">
+                    <label>Color Principal</label>
+                    <select id="newColor">
+                        <option value="">(Ninguno)</option>
+                        <option value="Rojo">Rojo</option>
+                        <option value="Azul">Azul</option>
+                        <option value="Verde">Verde</option>
+                        <option value="Blanco">Blanco</option>
+                        <option value="Amarillo">Amarillo</option>
+                        <option value="Naranja">Naranja</option>
+                        <option value="Morado">Morado</option>
+                        <option value="Cafe">Cafe</option>
+                    </select>
+                </div>
+
+                <div class="form-group"><label>Descripción</label><textarea id="newDesc" rows="3"></textarea></div>
+
+                <button type="submit" class="submit-btn">Guardar Producto</button>
+            </form>
+        </div>
+    </div>
+
     <script>
+        // --- LOGICA PESTAÑAS ---
+        function switchAdminTab(viewId, btn) {
+            document.querySelectorAll('.view-section').forEach(div => div.classList.remove('active'));
+            document.querySelectorAll('.tab-link').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(viewId).classList.add('active');
+            btn.classList.add('active');
+            
+            // Si abrimos inventario, cargar datos
+            if(viewId === 'viewGestion') cargarInventario();
+        }
+
+        // --- LOGICA GRAFICOS (Tus funciones existentes) ---
         let chartInstances = {}; 
+        fetch('http://localhost:3000/admin/stats').then(r=>r.json()).then(d=>{
+            document.getElementById('totalUsers').textContent = d.usuarios;
+            document.getElementById('totalCuentas').textContent = d.cuentas;
+            document.getElementById('totalReservas').textContent = d.reservas;
+        });
 
-        // 1. CARGAR NÚMEROS
-        fetch('http://localhost:3000/admin/stats')
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('totalUsers').textContent = data.usuarios;
-                document.getElementById('totalCuentas').textContent = data.cuentas;
-                document.getElementById('totalReservas').textContent = data.reservas;
-            }).catch(console.error);
-
-        // 2. USUARIOS
         async function cargarGraficoUsuarios(periodo, btn) {
-            if(btn) {
-                document.querySelectorAll('.filter-group button').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            }
+            if(btn) { document.querySelectorAll('.filter-group button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
             try {
                 const res = await fetch(`http://localhost:3000/admin/reportes/usuarios-crecimiento?periodo=${periodo}`);
                 const data = await res.json();
                 const ctx = document.getElementById('chartUserCrecimiento').getContext('2d');
-                if (chartInstances['users']) chartInstances['users'].destroy();
-
-                chartInstances['users'] = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: data.etiquetas,
-                        datasets: [{
-                            label: 'Nuevos Registros', data: data.valores,
-                            borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.2)',
-                            fill: true, tension: 0.4
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false }
-                });
-            } catch(e) { console.error(e); }
+                if(chartInstances['users']) chartInstances['users'].destroy();
+                chartInstances['users'] = new Chart(ctx, { type: 'line', data: { labels: data.etiquetas, datasets: [{ label: 'Registros', data: data.valores, borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.2)', fill: true }] }, options: { responsive: true, maintainAspectRatio: false } });
+            } catch(e) {}
         }
-
-        // 3. PRESUPUESTO (TORTA)
         async function cargarGraficoPresupuesto() {
-            try {
-                const res = await fetch(`http://localhost:3000/admin/reportes/usuarios-presupuesto`);
-                const data = await res.json();
-                if(!data.etiquetas || data.etiquetas.length === 0) return;
-                const ctx = document.getElementById('chartPresupuesto').getContext('2d');
-                if (chartInstances['presupuesto']) chartInstances['presupuesto'].destroy();
+            const res = await fetch(`http://localhost:3000/admin/reportes/usuarios-presupuesto`);
+            const data = await res.json();
+            const ctx = document.getElementById('chartPresupuesto').getContext('2d');
+            if(chartInstances['presupuesto']) chartInstances['presupuesto'].destroy();
+            chartInstances['presupuesto'] = new Chart(ctx, { type: 'doughnut', data: { labels: data.etiquetas, datasets: [{ data: data.valores, backgroundColor: ['#06831fc8', '#3498db', '#f1c40f', '#e74c3c'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } });
+        }
+        async function cargarGraficoApilado(endpoint, canvasId, horiz) {
+            const res = await fetch(`http://localhost:3000/admin/reportes/${endpoint}`);
+            const data = await res.json();
+            if(!data.etiquetas?.length) return;
+            new Chart(document.getElementById(canvasId), {
+                type: 'bar',
+                data: {
+                    labels: data.etiquetas,
+                    datasets: [
+                        { label: 'Guardado', data: data.pendientes, backgroundColor: '#3498db' },
+                        { label: 'Abonado', data: data.abonados, backgroundColor: '#f39c12' },
+                        { label: 'Pagado', data: data.pagados, backgroundColor: '#2ecc71' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, indexAxis: horiz?'y':'x', scales: { x: { stacked: true }, y: { stacked: true } } }
+            });
+        }
+        async function cargarGraficoDona(endpoint, canvasId) {
+            const res = await fetch(`http://localhost:3000/admin/reportes/${endpoint}`);
+            const data = await res.json();
+            if(!data.etiquetas?.length) return;
+            new Chart(document.getElementById(canvasId), { type: 'doughnut', data: { labels: data.etiquetas, datasets: [{ data: data.valores, backgroundColor: ['#e74c3c', '#3498db', '#f1c40f', '#2ecc71', '#9b59b6'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } });
+        }
 
-                chartInstances['presupuesto'] = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: data.etiquetas,
-                        datasets: [{
-                            data: data.valores,
-                            backgroundColor: ['#06831fc8', '#3498db', '#f1c40f', '#e74c3c', '#9b59b6'],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: { 
-                        responsive: true, maintainAspectRatio: false, // ESTO EVITA QUE CREZCA
-                        plugins: { legend: { position: 'right' } } 
-                    }
+        // --- LOGICA GESTIÓN INVENTARIO ---
+        async function cargarInventario() {
+            const tipo = document.getElementById('selectTipoInventario').value;
+            const tbody = document.getElementById('tbodyInventario');
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Cargando...</td></tr>';
+
+            try {
+                const res = await fetch(`http://localhost:3000/admin/listar-productos?tipo=${tipo}`);
+                const data = await res.json();
+                tbody.innerHTML = '';
+                if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No hay datos.</td></tr>'; return; }
+
+                data.forEach((item, idx) => {
+                    const tr = document.createElement('tr');
+                    // Detectar campos dinámicos
+                    const id = item.id_salon || item.id_decoracion || item.id_catering || item.id_fotografo || item.id_planeador;
+                    const nombre = item.nombre_lugar || item.nombre_item || item.nombre_servicio;
+                    const costo = parseFloat(item.costo_base).toLocaleString('es-ES');
+
+                    tr.innerHTML = `
+                        <td>${idx + 1}</td>
+                        <td><img src="${item.url_imagen}" style="width:50px; height:50px; object-fit:cover; border-radius:5px;" onerror="this.src='https://placehold.co/50'"></td>
+                        <td>${nombre}</td>
+                        <td style="color:#27ae60; font-weight:bold;">Bs ${costo}</td>
+                        <td>${item.departamento}</td>
+                        <td><button onclick="eliminarProducto('${tipo}', ${id})" style="background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:5px; cursor:pointer;">🗑️</button></td>
+                    `;
+                    tbody.appendChild(tr);
                 });
             } catch(e) { console.error(e); }
         }
 
-        // 4. GRÁFICOS APILADOS (SERVICIOS)
-        async function cargarGraficoServicio(endpoint, canvasId, esHorizontal = false) {
+        async function eliminarProducto(tipo, id) {
+            if(!confirm("¿Eliminar?")) return;
             try {
-                const res = await fetch(`http://localhost:3000/admin/reportes/${endpoint}`);
-                const data = await res.json();
-                if(!data.etiquetas || data.etiquetas.length === 0) return;
-
-                const ctx = document.getElementById(canvasId).getContext('2d');
-                
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: data.etiquetas,
-                        datasets: [
-                            { label: 'Guardado', data: data.pendientes, backgroundColor: '#3498db' },
-                            { label: 'Abonado', data: data.abonados, backgroundColor: '#f39c12' },
-                            { label: 'Pagado', data: data.pagados, backgroundColor: '#2ecc71' }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false, // ESTO EVITA QUE CREZCA
-                        indexAxis: esHorizontal ? 'y' : 'x',
-                        scales: {
-                            x: { stacked: true },
-                            y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } }
-                        }
-                    }
+                const res = await fetch('http://localhost:3000/admin/eliminar-producto', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({tipo, id})
                 });
+                const d = await res.json();
+                if(d.success) { alert("Eliminado"); cargarInventario(); }
+                else alert(d.message);
             } catch(e) { console.error(e); }
         }
 
-        // 5. CATERING (DONA)
-        async function cargarGraficoCatering() {
-            try {
-                const res = await fetch(`http://localhost:3000/admin/reportes/top-items?servicio=Catering`);
-                const data = await res.json();
-                if(!data.etiquetas || data.etiquetas.length === 0) return;
-
-                const ctx = document.getElementById('chartTopCatering').getContext('2d');
-                
-                new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: data.etiquetas,
-                        datasets: [{
-                            data: data.pagados.map((p, i) => p + data.pendientes[i] + data.abonados[i]), // Sumamos todo para el total
-                            backgroundColor: ['#06831fc8', '#3498db', '#f1c40f', '#e74c3c', '#9b59b6']
-                        }]
-                    },
-                    options: { 
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { position: 'right' } } 
-                    }
-                });
-            } catch(e) { console.error(e); }
+        // --- MODAL AGREGAR ---
+        function abrirModalProducto() { document.getElementById('modalProducto').style.display = 'flex'; cambiarFormulario(); }
+        function cambiarFormulario() {
+            const tipo = document.getElementById('newTipo').value;
+            document.getElementById('fieldCapacidad').classList.add('hidden');
+            document.getElementById('fieldExtrasSalon').classList.add('hidden');
+            document.getElementById('fieldColor').classList.add('hidden');
+            if(tipo==='Salon') { document.getElementById('fieldCapacidad').classList.remove('hidden'); document.getElementById('fieldExtrasSalon').classList.remove('hidden'); }
+            else if(tipo==='Decoracion') { document.getElementById('fieldColor').classList.remove('hidden'); }
         }
 
-        // --- INICIALIZACIÓN ---
-        cargarGraficoUsuarios('mes', document.getElementById('btnMes'));
+        document.getElementById('formProducto').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                tipo: document.getElementById('newTipo').value,
+                nombre: document.getElementById('newNombre').value,
+                costo: document.getElementById('newCosto').value,
+                depto: document.getElementById('newDepto').value,
+                imagen: document.getElementById('newImagen').value, // Texto simple
+                regla: document.getElementById('newRegla').value,
+                descripcion: document.getElementById('newDesc').value,
+                capacidad: document.getElementById('newCapacidad').value,
+                mesas: document.getElementById('newMesas').checked,
+                cubiertos: document.getElementById('newCubiertos').checked,
+                color: document.getElementById('newColor').value
+            };
+
+            try {
+                const res = await fetch('http://localhost:3000/admin/agregar-producto', {
+                    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data)
+                });
+                const r = await res.json();
+                if(r.success) { alert('Agregado'); document.getElementById('modalProducto').style.display='none'; document.getElementById('formProducto').reset(); cargarInventario(); }
+                else alert(r.message);
+            } catch(e) { console.error(e); }
+        });
+
+        // INICIALIZAR GRÁFICOS
+        cargarGraficoUsuarios('mes', document.querySelector('.filter-group button'));
         cargarGraficoPresupuesto();
-        
-        // Barras Apiladas
-        cargarGraficoServicio('top-items?servicio=Salon', 'chartMesSalon', false);
-        cargarGraficoServicio('top-items?servicio=Decoracion', 'chartTopDecoracion', true);
-        cargarGraficoServicio('top-items?servicio=Fotografo', 'chartTopFoto', false);
-        cargarGraficoServicio('top-items?servicio=Planeador', 'chartMesPlanner', false);
-        
-        // Catering
-        cargarGraficoCatering();
+        cargarGraficoApilado('top-items?servicio=Salon', 'chartMesSalon', false);
+        cargarGraficoApilado('top-items?servicio=Decoracion', 'chartTopDecoracion', true);
+        cargarGraficoApilado('top-items?servicio=Fotografo', 'chartTopFoto', false);
+        cargarGraficoDona('top-items?servicio=Catering', 'chartTopCatering');
+        cargarGraficoApilado('top-items?servicio=Planeador', 'chartMesPlanner', false);
 
     </script>
 </body>
