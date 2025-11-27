@@ -1,0 +1,3 @@
+INSERT INTO Planeador (nombre_servicio, descripcion, costo_base, departamento, url_imagen, regla_pago_meses) VALUES
+('Grethel Zapata Wedding Planner', 'Servicio integral de diseño, planificación y coordinación de bodas y eventos sociales en Cochabamba, Bolivia. Enfocada en hacer realidad los sueños de sus clientes.', 13500, 'Cochabamba', 'catalogo/planeador/1.jpeg', 7),
+('Kathy del Río Planificación', 'Servicio de organización y planificación de bodas bajo 4 pilares: Calidad, Exclusividad, Perfección y Detallismo. Enfocada en crear recuerdos imborrables.', 16500, 'Santa Cruz', 'catalogo/planeador/2.jpeg', 9);

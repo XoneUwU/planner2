@@ -1058,6 +1058,63 @@ app.get('/admin/reportes/:tipo', async (req, res) => {
         if (!res.headersSent) res.status(500).json({ error: 'Error interno' });
     }
 });
+// ==================================================================
+// 13. RUTA ADMIN: EDITAR PRODUCTO
+// ==================================================================
+app.post('/admin/editar-producto', async (req, res) => {
+    const { 
+        id, tipo, nombre, costo, depto, imagen, regla, 
+        color, capacidad, mesas, cubiertos, descripcion 
+    } = req.body;
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        
+        let query = '';
+        let params = [];
+
+        // Lógica dinámica según la tabla
+        if (tipo === 'Decoracion') {
+            query = `UPDATE Decoraciones SET 
+                        nombre_item = $1, costo_base = $2, departamento = $3, url_imagen = $4, 
+                        regla_pago_meses = $5, descripcion = $6, color = $7
+                     WHERE id_decoracion = $8`;
+            params = [nombre, costo, depto, imagen, regla, descripcion, color, id]; 
+        } 
+        else if (tipo === 'Salon') {
+            query = `UPDATE Salon SET 
+                        nombre_lugar = $1, costo_base = $2, departamento = $3, url_imagen = $4, 
+                        regla_pago_meses = $5, capacidad = $6, incluye_mesas = $7, incluye_cubiertos = $8
+                     WHERE id_salon = $9`;
+            const bMesas = (mesas === true || mesas === 'on');
+            const bCubiertos = (cubiertos === true || cubiertos === 'on');
+            params = [nombre, costo, depto, imagen, regla, capacidad, bMesas, bCubiertos, id];
+        } 
+        else {
+            let tabla = tipo; 
+            // Nombre de columna ID dinámica (id_catering, id_fotografo...)
+            let colId = 'id_' + tipo.toLowerCase(); 
+
+            query = `UPDATE ${tabla} SET 
+                        nombre_servicio = $1, costo_base = $2, departamento = $3, url_imagen = $4, 
+                        regla_pago_meses = $5, descripcion = $6
+                     WHERE ${colId} = $7`;
+            params = [nombre, costo, depto, imagen, regla, descripcion, id];
+        }
+
+        await client.query(query, params);
+        await client.query('COMMIT');
+        res.json({ success: true, message: 'Producto actualizado correctamente' });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error editando:', error);
+        res.status(500).json({ success: false, message: 'Error al actualizar.' });
+    } finally {
+        client.release();
+    }
+});
 
 app.listen(port, () => {
     console.log(`Servidor escuchando en http://localhost:${port}`);

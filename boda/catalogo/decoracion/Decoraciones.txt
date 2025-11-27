@@ -27,3 +27,12 @@ INSERT INTO Decoraciones (
 ('Mantelería Sencilla Viñedo', 'Manteles color crema o blanco para mesas largas en exterior', 200.00, 'Tarija', 'boda/catalogo/decoracion/manteleria_vinedo.jpg', 'Blanco', 3),
 ('Arreglo Pampa Grass', 'Centro de mesa rústico con pampas grass y flores secas', 450.00, 'Potosí', 'boda/catalogo/decoracion/arreglo_pampa.jpg', 'Cafe', 6),
 ('Mantelería Azul Marino', 'Tela pesada de color azul oscuro (Navy) para mesas redondas', 380.00, 'Chuquisaca', 'boda/catalogo/decoracion/manteleria_azul.jpg', 'Azul', 3);
+====
+INSERT INTO Decoracion (nombre_item, descripcion, costo_base, departamento, color, url_imagen, regla_pago_meses) VALUES
+('Mesa Larga Rústica Exterior Verde', 'Montaje de mesa larga de madera rústica para exterior, con sillas Crossback, manteles y servilletas en tono verde olivo. Incluye arreglos florales y follaje largo. (Costo por mesa de 10 personas).', 750, 'Chuquisaca', 'Verde', 'catalogo/decoracion/11.jpeg', 4),
+('Arco de Ceremonia Lila y Violeta', 'Arco de ceremonia con estructura dorada, cortinaje lila y densos arreglos florales en tonos morado y violeta. Incluye pasillo y velas de ambientación. Precio por set.', 4800, 'La Paz', 'Morado', 'catalogo/decoracion/12.jpeg', 5),
+('Centros de Mesa Alto Amarillo y Blanco', 'Centros de mesa altos en jarrón de cristal con cadenas de cuentas, flores amarillas y blancas. Mantel de color mostaza y detalles dorados en el montaje. (Costo por mesa de 10 personas).', 850, 'Tarija', 'Amarillo', 'catalogo/decoracion/13.jpeg', 6),
+('Decoración Pasillo Nupcial Rojo Lujo', 'Decoración de pasillo y altar con cortinas y arreglos florales en rojo borgoña, Ideal para bodas de invierno. Precio por set.', 6200, 'Oruro', 'Rojo', 'catalogo/decoracion/14.jpeg', 6),
+('Cielorraso Estrellado y Mesa Marina', 'Decoración de techo con tela drapeada azul y luces de hadas. Incluye montaje de mesa en tonos azul marino y blanco con cristalería dorada. Precio por set.', 5500, 'Beni', 'Azul', 'catalogo/decoracion/15.jpeg', 5),
+('Mesa Clásica con Toque Naranja', 'Montaje de mesa redonda con sillas doradas, lazos de tela naranja quemado y centros de mesa altos con flores en tonos blanco y óxido. (Costo por mesa de 10 personas).', 600, 'Cochabamba', 'Naranja', 'catalogo/decoracion/16.jpeg', 3),
+('Montaje Mesa Saten Morado y Uva', 'Mesa redonda con mantel satinado plateado, servilletas y centros de mesa florales en tonos morado intenso y blanco. Diseño elegante para eventos nocturnos. (Costo por mesa de 10 personas).', 650, 'Santa Cruz', 'Morado', 'catalogo/decoracion/17.jpeg', 4);

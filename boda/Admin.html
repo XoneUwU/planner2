@@ -13,85 +13,62 @@
 
         /* --- BARRA SUPERIOR --- */
         .top-bar {
-            background-color: #ffffff; 
-            padding: 15px 40px; 
-            border-bottom: 1px solid #ddd;
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            position: sticky; 
-            top: 0; 
-            z-index: 1000; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            background-color: #ffffff; padding: 15px 40px; border-bottom: 1px solid #ddd;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
         .logo-admin h2 { margin: 0; color: #06831fc8; font-size: 1.5em; display: flex; align-items: center; gap: 10px; }
         
         .admin-menu { display: flex; gap: 20px; align-items: center; }
         .nav-btn { text-decoration: none; color: #555; font-weight: 600; padding: 8px 15px; transition: 0.3s; }
         .nav-btn:hover { background-color: #f0f0f0; color: #06831fc8; }
+        .nav-btn.active { background-color: #e8f5e9; color: #06831fc8; border-radius: 8px; }
         
         .logout-btn { background-color: #e74c3c; color: white; padding: 8px 20px; border-radius: 20px; text-decoration: none; font-weight: bold; transition: 0.3s; }
         .logout-btn:hover { background-color: #c0392b; }
 
         /* --- CONTENEDOR PRINCIPAL --- */
-        .main-container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .main-container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
 
-        /* --- SISTEMA DE PESTAÑAS ADMIN --- */
-        .admin-tabs {
-            display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd;
-        }
-        .tab-link {
-            padding: 12px 25px; background: #e9ecef; border: none; border-radius: 8px 8px 0 0;
-            font-size: 1em; font-weight: bold; color: #555; cursor: pointer; transition: 0.3s;
-        }
+        /* --- PESTAÑAS --- */
+        .admin-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; }
+        .tab-link { padding: 12px 25px; background: #e9ecef; border: none; border-radius: 8px 8px 0 0; font-size: 1em; font-weight: bold; color: #555; cursor: pointer; transition: 0.3s; }
         .tab-link:hover { background: #dde1e3; }
-        .tab-link.active {
-            background: #06831fc8; color: white;
-            transform: translateY(2px); /* Efecto visual conectado */
-        }
+        .tab-link.active { background: #06831fc8; color: white; transform: translateY(2px); }
 
-        /* Contenedores de Vistas */
         .view-section { display: none; animation: fadeIn 0.3s; }
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- ESTILOS KPI (VISTA 1) --- */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        /* --- VISTA DASHBOARD --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px; }
         .stat-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; position: relative; overflow: hidden; }
+        .stat-card:hover { transform: translateY(-5px); }
         .stat-card::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 5px; background: linear-gradient(90deg, #06831fc8, #3498db); }
-        .stat-card h3 { margin: 0; color: #888; font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-card h3 { margin: 0; color: #888; font-size: 0.9em; text-transform: uppercase; }
         .stat-card p { margin: 10px 0 0; font-size: 3em; font-weight: 700; color: #2c3e50; }
 
         .charts-section { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-bottom: 40px; }
         .chart-box { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
         .chart-box h4 { margin-top: 0; color: #555; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .canvas-wrapper { position: relative; width: 100%; }
         
-        .filter-group button { background: #f8f9fa; border: 1px solid #ddd; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85em; color: #666; }
+        .filter-group button { background: #f8f9fa; border: 1px solid #ddd; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85em; color: #666; transition: 0.2s; }
+        .filter-group button:hover { background: #e2e6ea; }
         .filter-group button.active { background: #06831fc8; color: white; border-color: #06831fc8; }
+        .canvas-wrapper { position: relative; width: 100%; }
 
-        /* --- ESTILOS GESTIÓN (VISTA 2) --- */
-        .inventory-header {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
-            background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        .add-btn { 
-            background-color: #3498db; color: white; padding: 12px 25px; border-radius: 30px; 
-            text-decoration: none; font-weight: bold; border: none; cursor: pointer; 
-            display: flex; align-items: center; gap: 8px; transition: 0.3s; font-size: 15px;
-        }
-        .add-btn:hover { background-color: #2980b9; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4); }
+        /* --- VISTA GESTIÓN --- */
+        .inventory-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .add-btn { background-color: #3498db; color: white; padding: 12px 25px; border-radius: 30px; text-decoration: none; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.3s; font-size: 15px; }
+        .add-btn:hover { background-color: #2980b9; transform: translateY(-2px); }
 
-        .inventory-table-container {
-            background: white; border-radius: 15px; padding: 20px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow-x: auto;
-        }
+        .inventory-table-container { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th { padding: 15px; border-bottom: 2px solid #eee; color: #555; text-align: left; }
         td { padding: 15px; border-bottom: 1px solid #eee; color: #333; vertical-align: middle; }
         tr:hover { background-color: #f9f9f9; }
 
-        /* --- MODAL FORMULARIO --- */
+        /* --- MODAL --- */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); backdrop-filter: blur(3px); justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 30px; border-radius: 15px; width: 500px; max-width: 90%; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .close { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: #aaa; }
@@ -100,6 +77,7 @@
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 1em; }
         .hidden { display: none; }
         .submit-btn { width: 100%; padding: 12px; background: #06831fc8; color: white; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer; margin-top: 10px; font-weight: bold; }
+        .submit-btn:hover { background: #056618; }
 
         @media (max-width: 900px) { .charts-section { grid-template-columns: 1fr !important; } }
     </style>
@@ -109,7 +87,7 @@
     <header class="top-bar">
         <div class="logo-admin"><h2>🔒 Panel Admin</h2></div>
         <nav class="admin-menu">
-            <a href="home.html" target="_blank" class="nav-btn">Ver Sitio Web</a>
+            <a href="Principal.html" target="_blank" class="nav-btn">Ver Sitio Web</a>
             <a href="Login.html" class="logout-btn">Cerrar Sesión</a>
         </nav>
     </header>
@@ -131,14 +109,14 @@
             <div class="charts-section">
                 <div class="chart-box" style="grid-column: 1 / -1;"> 
                     <h4>📈 Crecimiento de Usuarios
-                        <div class="filter-group"><button onclick="cargarGraficoUsuarios('mes', this)" class="active">Por Mes</button><button onclick="cargarGraficoUsuarios('dia', this)">Por Día</button></div>
+                        <div class="filter-group"><button id="btnMes" onclick="cargarGraficoUsuarios('mes', this)" class="active">Por Mes</button><button id="btnDia" onclick="cargarGraficoUsuarios('dia', this)">Por Día</button></div>
                     </h4>
                     <div class="canvas-wrapper" style="height: 300px;"><canvas id="chartUserCrecimiento"></canvas></div>
                 </div>
             </div>
 
             <div class="charts-section">
-                <div class="chart-box"><h4>🏛️ Top Salones (Actividad)</h4><div class="canvas-wrapper" style="height: 300px;"><canvas id="chartMesSalon"></canvas></div></div>
+                <div class="chart-box"><h4>🏛️ Top Salones</h4><div class="canvas-wrapper" style="height: 300px;"><canvas id="chartMesSalon"></canvas></div></div>
                 <div class="chart-box"><h4>💰 Presupuesto</h4><div class="canvas-wrapper" style="height: 250px; display:flex; justify-content:center;"><canvas id="chartPresupuesto"></canvas></div></div>
             </div>
 
@@ -148,7 +126,7 @@
 
             <div class="charts-section" style="grid-template-columns: repeat(3, 1fr);">
                 <div class="chart-box"><h4>📸 Fotógrafos</h4><div class="canvas-wrapper" style="height: 250px;"><canvas id="chartTopFoto"></canvas></div></div>
-                <div class="chart-box"><h4>🍽️ Catering</h4><div class="canvas-wrapper" style="height: 200px; display:flex; justify-content:center;"><canvas id="chartTopCatering"></canvas></div></div>
+                <div class="chart-box"><h4>🍽️ Catering</h4><div class="canvas-wrapper" style="height: 250px;"><canvas id="chartTopCatering"></canvas></div></div>
                 <div class="chart-box"><h4>📋 Planners</h4><div class="canvas-wrapper" style="height: 250px;"><canvas id="chartMesPlanner"></canvas></div></div>
             </div>
         </div>
@@ -180,8 +158,7 @@
                             <th>Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="tbodyInventario">
-                        </tbody>
+                    <tbody id="tbodyInventario"></tbody>
                 </table>
             </div>
         </div>
@@ -196,7 +173,7 @@
             <form id="formProducto">
                 <div class="form-group">
                     <label>Tipo de Servicio</label>
-                    <select id="newTipo" onchange="cambiarFormulario()">
+                    <select id="newTipo" name="tipo" onchange="cambiarFormulario()">
                         <option value="Salon">Salón de Eventos</option>
                         <option value="Decoracion">Decoración</option>
                         <option value="Catering">Catering</option>
@@ -205,11 +182,12 @@
                     </select>
                 </div>
 
-                <div class="form-group"><label>Nombre</label><input type="text" id="newNombre" required></div>
-                <div class="form-group"><label>Costo (Bs)</label><input type="number" id="newCosto" required min="0"></div>
+                <div class="form-group"><label>Nombre / Título</label><input type="text" id="newNombre" name="nombre" required placeholder="Ej: Salón Los Olivos"></div>
+                <div class="form-group"><label>Costo Base (Bs)</label><input type="number" id="newCosto" name="costo" required min="0"></div>
+                
                 <div class="form-group">
                     <label>Departamento</label>
-                    <select id="newDepto">
+                    <select id="newDepto" name="depto">
                         <option value="Cochabamba">Cochabamba</option>
                         <option value="Santa Cruz">Santa Cruz</option>
                         <option value="La Paz">La Paz</option>
@@ -223,17 +201,17 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Nombre de Imagen (ej: foto.jpg)</label>
+                    <label>Ruta de Imagen (Texto)</label>
                     <input type="text" id="newImagen" placeholder="catalogo/salon/foto.jpg" required>
-                    <small style="color:#888;">Asegúrate de poner el archivo en la carpeta del proyecto.</small>
+                    <small style="color:#888;">Ruta relativa desde la carpeta del proyecto.</small>
                 </div>
 
-                <div class="form-group"><label>Regla de Pago (Meses)</label><input type="number" id="newRegla" value="1" min="0"></div>
+                <div class="form-group"><label>Meses Anticipación</label><input type="number" id="newRegla" name="regla" value="1" min="0"></div>
 
-                <div id="fieldCapacidad" class="form-group"><label>Capacidad</label><input type="number" id="newCapacidad"></div>
+                <div id="fieldCapacidad" class="form-group"><label>Capacidad</label><input type="number" id="newCapacidad" name="capacidad"></div>
                 <div id="fieldExtrasSalon" class="form-group">
-                    <label style="display:inline; margin-right:15px;"><input type="checkbox" id="newMesas"> Incluye Mesas</label>
-                    <label style="display:inline;"><input type="checkbox" id="newCubiertos"> Incluye Cubiertos</label>
+                    <label style="display:inline; margin-right:15px;"><input type="checkbox" id="newMesas" name="mesas"> Incluye Mesas</label>
+                    <label style="display:inline;"><input type="checkbox" id="newCubiertos" name="cubiertos"> Incluye Cubiertos</label>
                 </div>
 
                 <div id="fieldColor" class="form-group hidden">
@@ -251,7 +229,7 @@
                     </select>
                 </div>
 
-                <div class="form-group"><label>Descripción</label><textarea id="newDesc" rows="3"></textarea></div>
+                <div class="form-group"><label>Descripción</label><textarea id="newDesc" name="descripcion" rows="3"></textarea></div>
 
                 <button type="submit" class="submit-btn">Guardar Producto</button>
             </form>
@@ -259,20 +237,20 @@
     </div>
 
     <script>
-        // --- LOGICA PESTAÑAS ---
+        let chartInstances = {}; 
+        let modoEdicion = false;
+        let idProductoEditar = null;
+
+        // --- PESTAÑAS ---
         function switchAdminTab(viewId, btn) {
             document.querySelectorAll('.view-section').forEach(div => div.classList.remove('active'));
             document.querySelectorAll('.tab-link').forEach(b => b.classList.remove('active'));
-            
             document.getElementById(viewId).classList.add('active');
             btn.classList.add('active');
-            
-            // Si abrimos inventario, cargar datos
             if(viewId === 'viewGestion') cargarInventario();
         }
 
-        // --- LOGICA GRAFICOS (Tus funciones existentes) ---
-        let chartInstances = {}; 
+        // --- GRÁFICOS (Stats) ---
         fetch('http://localhost:3000/admin/stats').then(r=>r.json()).then(d=>{
             document.getElementById('totalUsers').textContent = d.usuarios;
             document.getElementById('totalCuentas').textContent = d.cuentas;
@@ -313,31 +291,23 @@
                 options: { responsive: true, maintainAspectRatio: false, indexAxis: horiz?'y':'x', scales: { x: { stacked: true }, y: { stacked: true } } }
             });
         }
-        async function cargarGraficoDona(endpoint, canvasId) {
-            const res = await fetch(`http://localhost:3000/admin/reportes/${endpoint}`);
-            const data = await res.json();
-            if(!data.etiquetas?.length) return;
-            new Chart(document.getElementById(canvasId), { type: 'doughnut', data: { labels: data.etiquetas, datasets: [{ data: data.valores, backgroundColor: ['#e74c3c', '#3498db', '#f1c40f', '#2ecc71', '#9b59b6'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } } });
-        }
 
-        // --- LOGICA GESTIÓN INVENTARIO ---
+        // --- GESTIÓN INVENTARIO ---
         async function cargarInventario() {
             const tipo = document.getElementById('selectTipoInventario').value;
             const tbody = document.getElementById('tbodyInventario');
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Cargando...</td></tr>';
-
             try {
                 const res = await fetch(`http://localhost:3000/admin/listar-productos?tipo=${tipo}`);
                 const data = await res.json();
                 tbody.innerHTML = '';
                 if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No hay datos.</td></tr>'; return; }
-
                 data.forEach((item, idx) => {
                     const tr = document.createElement('tr');
-                    // Detectar campos dinámicos
                     const id = item.id_salon || item.id_decoracion || item.id_catering || item.id_fotografo || item.id_planeador;
                     const nombre = item.nombre_lugar || item.nombre_item || item.nombre_servicio;
                     const costo = parseFloat(item.costo_base).toLocaleString('es-ES');
+                    const itemStr = JSON.stringify(item).replace(/"/g, '&quot;'); // Seguro para HTML
 
                     tr.innerHTML = `
                         <td>${idx + 1}</td>
@@ -345,7 +315,10 @@
                         <td>${nombre}</td>
                         <td style="color:#27ae60; font-weight:bold;">Bs ${costo}</td>
                         <td>${item.departamento}</td>
-                        <td><button onclick="eliminarProducto('${tipo}', ${id})" style="background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:5px; cursor:pointer;">🗑️</button></td>
+                        <td>
+                            <button onclick="prepararEdicion('${tipo}', ${itemStr})" style="background:#f39c12; color:white; border:none; padding:6px 10px; border-radius:5px; cursor:pointer; margin-right:5px;">✏️</button>
+                            <button onclick="eliminarProducto('${tipo}', ${id})" style="background:#e74c3c; color:white; border:none; padding:6px 10px; border-radius:5px; cursor:pointer;">🗑️</button>
+                        </td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -355,18 +328,50 @@
         async function eliminarProducto(tipo, id) {
             if(!confirm("¿Eliminar?")) return;
             try {
-                const res = await fetch('http://localhost:3000/admin/eliminar-producto', {
-                    method: 'POST', headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({tipo, id})
-                });
+                const res = await fetch('http://localhost:3000/admin/eliminar-producto', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({tipo, id}) });
                 const d = await res.json();
-                if(d.success) { alert("Eliminado"); cargarInventario(); }
-                else alert(d.message);
+                if(d.success) { alert("Eliminado"); cargarInventario(); } else alert(d.message);
             } catch(e) { console.error(e); }
         }
 
-        // --- MODAL AGREGAR ---
-        function abrirModalProducto() { document.getElementById('modalProducto').style.display = 'flex'; cambiarFormulario(); }
+        // --- MODAL (AGREGAR / EDITAR) ---
+        function abrirModalProducto() {
+            modoEdicion = false; idProductoEditar = null;
+            document.querySelector('#modalProducto h2').textContent = "Nuevo Producto";
+            document.querySelector('#formProducto button[type=submit]').textContent = "Guardar Producto";
+            document.getElementById('formProducto').reset();
+            document.getElementById('newTipo').disabled = false; 
+            document.getElementById('modalProducto').style.display = 'flex';
+            cambiarFormulario();
+        }
+
+        function prepararEdicion(tipo, item) {
+            modoEdicion = true;
+            idProductoEditar = item.id_salon || item.id_decoracion || item.id_catering || item.id_fotografo || item.id_planeador;
+            
+            document.querySelector('#modalProducto h2').textContent = "Editar Producto";
+            document.querySelector('#formProducto button[type=submit]').textContent = "Actualizar";
+            
+            document.getElementById('newTipo').value = tipo;
+            document.getElementById('newTipo').disabled = true;
+            document.getElementById('newNombre').value = item.nombre_lugar || item.nombre_item || item.nombre_servicio;
+            document.getElementById('newCosto').value = item.costo_base;
+            document.getElementById('newDepto').value = item.departamento;
+            document.getElementById('newImagen').value = item.url_imagen;
+            document.getElementById('newRegla').value = item.regla_pago_meses;
+            document.getElementById('newDesc').value = item.descripcion || '';
+
+            cambiarFormulario();
+            if (tipo === 'Salon') {
+                document.getElementById('newCapacidad').value = item.capacidad;
+                document.getElementById('newMesas').checked = item.incluye_mesas;
+                document.getElementById('newCubiertos').checked = item.incluye_cubiertos;
+            } else if (tipo === 'Decoracion') {
+                document.getElementById('newColor').value = item.color || '';
+            }
+            document.getElementById('modalProducto').style.display = 'flex';
+        }
+
         function cambiarFormulario() {
             const tipo = document.getElementById('newTipo').value;
             document.getElementById('fieldCapacidad').classList.add('hidden');
@@ -376,6 +381,7 @@
             else if(tipo==='Decoracion') { document.getElementById('fieldColor').classList.remove('hidden'); }
         }
 
+        // ENVÍO FORMULARIO (JSON)
         document.getElementById('formProducto').addEventListener('submit', async (e) => {
             e.preventDefault();
             const data = {
@@ -383,7 +389,7 @@
                 nombre: document.getElementById('newNombre').value,
                 costo: document.getElementById('newCosto').value,
                 depto: document.getElementById('newDepto').value,
-                imagen: document.getElementById('newImagen').value, // Texto simple
+                imagen: document.getElementById('newImagen').value,
                 regla: document.getElementById('newRegla').value,
                 descripcion: document.getElementById('newDesc').value,
                 capacidad: document.getElementById('newCapacidad').value,
@@ -392,14 +398,33 @@
                 color: document.getElementById('newColor').value
             };
 
+            let url = 'http://localhost:3000/admin/agregar-producto';
+            if (modoEdicion) {
+                url = 'http://localhost:3000/admin/editar-producto';
+                data.id = idProductoEditar;
+            }
+
             try {
-                const res = await fetch('http://localhost:3000/admin/agregar-producto', {
-                    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data)
-                });
+                const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
                 const r = await res.json();
-                if(r.success) { alert('Agregado'); document.getElementById('modalProducto').style.display='none'; document.getElementById('formProducto').reset(); cargarInventario(); }
-                else alert(r.message);
-            } catch(e) { console.error(e); }
+                if(r.success) { 
+                    alert(modoEdicion ? '¡Actualizado!' : '¡Agregado!'); 
+                    document.getElementById('modalProducto').style.display='none'; 
+                    document.getElementById('formProducto').reset(); 
+                    cargarInventario(); 
+                    // Recargar gráficos si es necesario:
+                    // location.reload();
+                } else alert(r.message);
+            } catch(e) { console.error(e); alert('Error de conexión'); }
+        });
+
+        // Validación Inputs (Bloquear Negativos)
+        const inputsValidar = [document.getElementById('newCosto'), document.getElementById('newCapacidad'), document.getElementById('newRegla')];
+        inputsValidar.forEach(input => {
+            if(input){
+                input.addEventListener('keydown', function(e) { if (["-", "+", "e", ".", ","].includes(e.key)) e.preventDefault(); });
+                input.addEventListener('input', function() { this.value = this.value.replace(/[^0-9]/g, ''); });
+            }
         });
 
         // INICIALIZAR GRÁFICOS
@@ -408,7 +433,7 @@
         cargarGraficoApilado('top-items?servicio=Salon', 'chartMesSalon', false);
         cargarGraficoApilado('top-items?servicio=Decoracion', 'chartTopDecoracion', true);
         cargarGraficoApilado('top-items?servicio=Fotografo', 'chartTopFoto', false);
-        cargarGraficoDona('top-items?servicio=Catering', 'chartTopCatering');
+        cargarGraficoApilado('top-items?servicio=Catering', 'chartTopCatering', false);
         cargarGraficoApilado('top-items?servicio=Planeador', 'chartMesPlanner', false);
 
     </script>
