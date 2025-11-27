@@ -820,8 +820,58 @@ app.post('/pagar-reserva', async (req, res) => {
     }
 });
 // ==================================================================
-// 8. RUTA DE REPORTES (ACTUALIZADA - DÍAS/MESES Y AZUL/VERDE)
+// 10. RUTA ADMIN: AGREGAR PRODUCTO
 // ==================================================================
+app.post('/admin/agregar-producto', async (req, res) => {
+    const { 
+        tipo, // 'Salon', 'Decoracion', 'Catering', 'Fotografo', 'Planeador'
+        nombre, costo, depto, imagen, regla, // Campos comunes
+        // Campos específicos
+        color, capacidad, mesas, cubiertos, descripcion 
+    } = req.body;
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        
+        let query = '';
+        let params = [];
+
+        // 1. Lógica para DECORACIONES
+        if (tipo === 'Decoracion') {
+            query = `INSERT INTO Decoraciones (nombre_item, costo_base, departamento, url_imagen, regla_pago_meses, descripcion, color) 
+                     VALUES ($1, $2, $3, $4, $5, $6, $7)`;
+            params = [nombre, costo, depto, imagen, regla, descripcion, color]; 
+        } 
+        // 2. Lógica para SALONES
+        else if (tipo === 'Salon') {
+            query = `INSERT INTO Salon (nombre_lugar, costo_base, departamento, url_imagen, regla_pago_meses, capacidad, incluye_mesas, incluye_cubiertos) 
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`;
+            // Convertir checkbox a booleanos
+            const bMesas = (mesas === true || mesas === 'on');
+            const bCubiertos = (cubiertos === true || cubiertos === 'on');
+            params = [nombre, costo, depto, imagen, regla, capacidad, bMesas, bCubiertos];
+        } 
+        // 3. Lógica para OTROS (Catering, Fotografo, Planeador)
+        else {
+            let tabla = tipo; // El nombre de la tabla coincide con el tipo
+            query = `INSERT INTO ${tabla} (nombre_servicio, costo_base, departamento, url_imagen, regla_pago_meses, descripcion) 
+                     VALUES ($1, $2, $3, $4, $5, $6)`;
+            params = [nombre, costo, depto, imagen, regla, descripcion];
+        }
+
+        await client.query(query, params);
+        await client.query('COMMIT');
+        res.json({ success: true, message: 'Producto agregado exitosamente' });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error agregando producto:', error);
+        res.status(500).json({ success: false, message: 'Error al guardar en base de datos.' });
+    } finally {
+        client.release();
+    }
+});   
 // ==================================================================
 // 8. RUTA DE REPORTES (ACTUALIZADA Y CORREGIDA)
 // ==================================================================

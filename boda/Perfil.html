@@ -30,172 +30,97 @@
         }
         .partner-info { font-size: 0.9em; color: #888; }
         .partner-name { color: #e74c3c; font-weight: bold; }
-        .profile-right a { text-decoration: none; color: #333; font-size: 24px; padding: 10px; border-radius: 50%; transition: background 0.3s; }
-        .profile-right a:hover { background: #ddd; }
+        
+        .nav-icons { display: flex; align-items: center; gap: 20px; }
+        .nav-btn-icon { background: none; border: none; font-size: 24px; cursor: pointer; color: #555; text-decoration: none; }
+        .nav-btn-icon:hover { transform: scale(1.2); color: #3498db; }
 
-        /* --- PESTAÑAS (CARPETAS) --- */
+        /* --- PESTAÑAS --- */
         .tabs-container {
-            max-width: 1200px;
-            margin: 40px auto 0;
-            padding: 0 20px;
-            display: flex;
-            gap: 5px;
-            border-bottom: 3px solid #3498db;
-            overflow-x: auto; /* Por si en celular no caben */
+            max-width: 1200px; margin: 40px auto 0; padding: 0 20px;
+            display: flex; gap: 5px; border-bottom: 3px solid #3498db; overflow-x: auto;
         }
-
         .tab-btn {
-            padding: 12px 20px;
-            background: #e0e0e0;
-            border: none;
-            border-radius: 10px 10px 0 0;
-            font-size: 0.95em;
-            font-weight: bold;
-            color: #555;
-            cursor: pointer;
-            transition: 0.3s;
-            white-space: nowrap;
+            padding: 12px 20px; background: #e0e0e0; border: none; border-radius: 10px 10px 0 0;
+            font-size: 0.95em; font-weight: bold; color: #555; cursor: pointer; transition: 0.3s; white-space: nowrap;
         }
-
         .tab-btn:hover { background: #d5d5d5; }
+        .tab-btn.active { background: #3498db; color: white; transform: translateY(2px); }
 
-        .tab-btn.active {
-            background: #3498db;
-            color: white;
-            transform: translateY(2px); /* Efecto visual de conexión */
-        }
-
-        /* --- CONTENIDO DE PESTAÑAS --- */
+        /* --- CONTENIDO PESTAÑAS --- */
         .tab-content {
-            display: none;
-            padding: 30px;
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            min-height: 300px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            border-radius: 0 0 10px 10px;
+            display: none; padding: 30px; max-width: 1200px; margin: 0 auto;
+            background: white; min-height: 300px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-radius: 0 0 10px 10px;
         }
         .tab-content.active { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- GRID DE IMÁGENES --- */
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 20px;
-        }
-
+        /* --- GRID --- */
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
         .gallery-item {
-            display: flex; flex-direction: column;
-            width: 100%; border-radius: 10px; overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            background: white; border: 1px solid #eee;
-            transition: transform 0.2s;
+            display: flex; flex-direction: column; width: 100%; border-radius: 10px; overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); background: white; border: 1px solid #eee; transition: transform 0.2s;
         }
-        .gallery-item:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.15); }
-
-        .gallery-item img { width: 100%; height: 160px; object-fit: cover; }
-        
+        .gallery-item:hover { transform: translateY(-5px); }
+        .gallery-item img { width: 100%; height: 160px; object-fit: cover; cursor: pointer; }
         .gallery-info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; text-align: left; }
         
-        /* Estilos para los nuevos iconos del header */
-        .nav-icons {
-            display: flex;
-            align-items: center;
-            gap: 20px; /* Espacio entre iconos */
-        }
-
-        .nav-btn-icon {
-            background: none;
-            border: none;
-            font-size: 24px; /* Tamaño del emoji/icono */
-            cursor: pointer;
-            color: #555;
-            transition: transform 0.2s, color 0.2s;
-            position: relative;
-            text-decoration: none; /* Para los <a> */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .nav-btn-icon:hover {
-            transform: scale(1.2);
-            color: #3498db;
-        }
-
-        /* Tooltip (texto al pasar el mouse) */
-        .nav-btn-icon:hover::after {
-            content: attr(title); /* Usa el atributo title del HTML */
-            position: absolute;
-            bottom: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            color: white;
-            font-size: 12px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            white-space: nowrap;
-            pointer-events: none;
-        }
-        /* Botones */
-        .pay-btn {
-            background-color: #27ae60; color: white; border: none;
-            padding: 8px 15px; border-radius: 5px; cursor: pointer;
-            width: 100%; margin-top: auto; font-weight: bold; transition: 0.3s;
-        }
-        .pay-btn:hover { background-color: #219150; }
-        
-        .delete-btn {
-            position: absolute; top: 10px; right: 10px;
-            background: rgba(231, 76, 60, 0.9); color: white;
-            border: none; width: 30px; height: 30px; border-radius: 50%;
-            cursor: pointer; display: none; justify-content: center; align-items: center;
-            font-weight: bold;
-        }
+        .pay-btn { background-color: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: auto; font-weight: bold; }
+        .delete-btn { position: absolute; top: 10px; right: 10px; background: rgba(231, 76, 60, 0.9); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: none; font-weight: bold; justify-content: center; align-items: center; }
         .gallery-item:hover .delete-btn { display: flex; }
 
-        /* --- MODAL PRO --- */
+        /* --- MODAL CORREGIDO (SCROLL UNIFICADO) --- */
         .modal {
-            display: none; position: fixed; z-index: 2000; left: 0; top: 0;
+            display: none; position: fixed; z-index: 3000; left: 0; top: 0;
             width: 100%; height: 100%; background-color: rgba(0,0,0,0.85);
-            backdrop-filter: blur(5px); justify-content: center; align-items: center;
-            animation: fadeIn 0.3s;
+            backdrop-filter: blur(5px); justify-content: center; align-items: flex-start; /* Alineado arriba para permitir scroll */
+            padding: 20px; box-sizing: border-box; overflow-y: auto; /* Scroll en el fondo oscuro si es necesario */
         }
 
         .modal-content-pro {
-            background-color: white; border-radius: 15px; width: 90%; max-width: 850px;
-            display: flex; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            position: relative; flex-direction: row;
+            background-color: white; border-radius: 15px; width: 100%; max-width: 850px;
+            display: flex; flex-direction: row;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); position: relative;
+            margin-top: 5vh; margin-bottom: 5vh; /* Margen vertical */
+            /* Eliminamos max-height y overflow:hidden para que crezca naturalmente */
         }
 
-        .modal-left { width: 40%; background: #f9f9f9; display: flex; flex-direction: column; border-right: 1px solid #eee; }
+        .modal-left { 
+            width: 40%; background: #f9f9f9; display: flex; flex-direction: column; 
+            border-right: 1px solid #eee; 
+        }
         .modal-left img { width: 100%; height: 250px; object-fit: cover; }
-        .modal-desc-box { padding: 20px; color: #555; font-size: 0.95em; line-height: 1.6; overflow-y: auto; }
+        .modal-desc-box { padding: 20px; color: #555; font-size: 0.95em; line-height: 1.6; }
 
         .modal-right { width: 60%; padding: 30px; display: flex; flex-direction: column; }
 
-        .close-modal {
-            position: absolute; top: 10px; right: 15px; color: #aaa; font-size: 28px; 
-            font-weight: bold; cursor: pointer; z-index: 10;
-        }
-        .close-modal:hover { color: #000; }
+        .close-modal { position: absolute; top: 10px; right: 15px; color: #555; font-size: 30px; font-weight: bold; cursor: pointer; z-index: 20; background:rgba(255,255,255,0.8); border-radius:50%; width:35px; height:35px; text-align:center; line-height:35px;}
 
-        .qr-section {
-            display: none; background: #fff; padding: 15px; border-radius: 8px;
-            text-align: center; margin-top: 10px; border: 2px dashed #3498db;
-        }
+        .qr-section { display: none; background: #fff; padding: 15px; border: 2px dashed #3498db; text-align: center; margin-top: 10px; }
         .qr-img { width: 120px; height: 120px; margin: 0 auto; display: block; }
 
+        /* RESPONSIVIDAD MODAL */
         @media (max-width: 768px) {
-            .modal-content-pro { flex-direction: column; max-height: 90vh; overflow-y: auto; }
-            .modal-left, .modal-right { width: 100%; }
-            .modal-left img { height: 180px; }
+            .profile-header { flex-direction: column; gap: 15px; text-align: center; }
+            
+            .modal-content-pro { flex-direction: column; } /* Se apila */
+            
+            .modal-left { 
+                width: 100%; border-right: none; border-bottom: 1px solid #eee; 
+                height: auto; 
+            }
+            .modal-left img { height: 200px; }
+            
+            .modal-right { 
+                width: 100%; height: auto; padding: 20px;
+                box-sizing: border-box;
+            }
+            
             .tabs-container { flex-wrap: wrap; }
-            .tab-btn { flex-grow: 1; text-align: center; }
+            .tab-btn { flex-grow: 1; text-align: center; padding: 8px; }
+            .gallery-grid { grid-template-columns: 1fr 1fr; }
         }
+        @media (max-width: 480px) { .gallery-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -205,26 +130,17 @@
             <h2 id="nombreUsuario">Cargando...</h2>
             <p id="presupuestoUsuario">$0.00</p>
         </div>
-
         <div class="profile-center">
             <div>CÓDIGO DE PAREJA</div>
             <div class="code-box" id="codigoPareja">---</div>
             <div class="partner-info" id="infoPareja">Esperando...</div>
         </div>
-
         <div class="nav-icons">
             <div class="nav-btn-icon" onclick="mostrarNotificaciones()" title="Notificaciones">
-                🔔
-                <span id="badgeNotif" style="display:none; position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:16px; height:16px; font-size:10px; justify-content:center; align-items:center;">0</span>
+                🔔 <span id="badgeNotif" style="display:none; position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:16px; height:16px; font-size:10px; justify-content:center; align-items:center;">0</span>
             </div>
-
-            <a href="Principal.html" class="nav-btn-icon" title="Ir al Catálogo">
-                🏠
-            </a>
-
-            <button class="nav-btn-icon" onclick="cerrarSesion()" title="Cerrar Sesión" style="color: #e74c3c;">
-                🚪
-            </button>
+            <a href="Principal.html" class="nav-btn-icon" title="Ir a Inicio">🏠</a>
+            <button class="nav-btn-icon" onclick="cerrarSesion()" title="Cerrar Sesión" style="color: #e74c3c;">🚪</button>
         </div>
     </header>
 
@@ -236,59 +152,44 @@
         <button class="tab-btn" onclick="openTab('tabPlanner', this)">📋 Planeador</button>
     </div>
 
-    <div id="tabSalon" class="tab-content active">
-        <div id="gridSalon" class="gallery-grid"></div>
-    </div>
-
-    <div id="tabDecor" class="tab-content">
-        <div id="gridDecor" class="gallery-grid"></div>
-    </div>
-
-    <div id="tabCatering" class="tab-content">
-        <div id="gridCatering" class="gallery-grid"></div>
-    </div>
-
-    <div id="tabFoto" class="tab-content">
-        <div id="gridFoto" class="gallery-grid"></div>
-    </div>
-
-    <div id="tabPlanner" class="tab-content">
-        <div id="gridPlanner" class="gallery-grid"></div>
-    </div>
-
+    <div id="tabSalon" class="tab-content active"><div id="gridSalon" class="gallery-grid"></div></div>
+    <div id="tabDecor" class="tab-content"><div id="gridDecor" class="gallery-grid"></div></div>
+    <div id="tabCatering" class="tab-content"><div id="gridCatering" class="gallery-grid"></div></div>
+    <div id="tabFoto" class="tab-content"><div id="gridFoto" class="gallery-grid"></div></div>
+    <div id="tabPlanner" class="tab-content"><div id="gridPlanner" class="gallery-grid"></div></div>
 
     <div id="modalPago" class="modal">
         <div class="modal-content-pro">
             <span class="close-modal" onclick="cerrarModalPago()">&times;</span>
             
             <div class="modal-left">
-                <img id="pagoImg" src="" alt="Producto">
+                <img id="pagoImg" src="" alt="Producto" onerror="this.src='https://placehold.co/400x300?text=Sin+Imagen'">
                 <div class="modal-desc-box">
                     <h3 id="pagoNombreItem" style="margin-top:0; color:#2c3e50;">Nombre</h3>
-                    <div id="pagoDetalleHTML"></div> <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ddd;">
+                    <div id="pagoDetalleHTML"></div> 
+                    <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ddd;">
                     <p style="margin:0;">Precio Total:<br><strong id="pagoPrecioTotal" style="color:#27ae60; font-size:1.4em;"></strong></p>
                 </div>
             </div>
 
             <div class="modal-right">
                 <h2 style="margin-top:0; color: #2c3e50; font-size: 1.5em;">Realizar Pago</h2>
-
+                
                 <div style="margin-bottom: 15px;">
-                    <label style="font-weight:bold; display:block; margin-bottom:5px;">1. Monto a Pagar</label>
-                    
-                    <div id="opcionesPagoContainer">
+                    <label style="font-weight:bold; display:block; margin-bottom:5px; color:#555;">1. Monto a Pagar</label>
+                    <div id="opcionesPagoContainer" style="background:#f8f9fa; padding:10px; border-radius:8px;">
                         <div style="margin-bottom: 5px;">
                             <input type="radio" name="tipoPago" id="pagoTotal" value="Total" checked onchange="calcularTotalPago()">
-                            <label for="pagoTotal" id="labelTotal">Completo (100%)</label>
+                            <label for="pagoTotal" id="labelTotal" style="cursor:pointer;">Completo (100%)</label>
                         </div>
                         <div id="opcionParcial" style="display: none;">
                             <input type="radio" name="tipoPago" id="pagoParcial" value="Parcial" onchange="calcularTotalPago()">
-                            <label for="pagoParcial">Anticipo (50%)</label>
+                            <label for="pagoParcial" style="cursor:pointer;">Anticipo (50%)</label>
                         </div>
                     </div>
                 </div>
 
-                <label style="font-weight:bold; margin-bottom:5px;">2. Método de Pago</label>
+                <label style="font-weight:bold; margin-bottom:5px; color:#555;">2. Método de Pago</label>
                 <select id="metodoPago" onchange="checkMetodoPago()" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-bottom:10px;">
                     <option value="Tarjeta">Tarjeta de Crédito/Débito</option>
                     <option value="QR">Pago con QR</option>
@@ -299,7 +200,7 @@
                     <p style="margin:0 0 10px; font-weight:bold;">Escanea este QR:</p>
                     <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" class="qr-img" alt="QR">
                     <p style="font-size:0.9em; margin:10px 0;">Monto exacto: <strong id="qrMonto" style="color:#27ae60;"></strong></p>
-                    <input type="text" placeholder="Nº de Comprobante" style="width: 90%; padding: 8px; border:1px solid #ccc; border-radius:4px;">
+                    <input type="text" placeholder="Nº de Comprobante" style="width: 100%; padding: 8px; border:1px solid #ccc; border-radius:4px; box-sizing: border-box;">
                 </div>
 
                 <div id="seccionTarjeta">
@@ -307,92 +208,60 @@
                     <input type="text" placeholder="Número de tarjeta" style="width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px;">
                 </div>
 
-                <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid #eee;">
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <span>Total a Pagar Ahora:</span>
+                        <span style="font-size:1.1em; color:#555;">A Pagar Ahora:</span>
                         <span id="montoFinalAPagar" style="font-size: 1.4em; font-weight: bold; color: #27ae60;">Bs 0.00</span>
                     </div>
-                    <button onclick="confirmarTransaccion()" class="pay-btn" style="font-size: 1.1em;">✅ Confirmar</button>
+                    <button onclick="confirmarTransaccion()" class="pay-btn" style="font-size: 1.1em; padding: 12px;">✅ Confirmar</button>
                 </div>
             </div>
         </div>
     </div>
 
 <script>
-    // --- VARIABLES GLOBALES DE PAGO ---
     let reservaActualId = null;
     let precioTotalItem = 0; 
     let montoAPagarAhora = 0;
-    
-    // Estado del modal
     let esSaldoPendiente = false; 
     let esTipoSalon = false;
 
-    // --- LÓGICA PESTAÑAS ---
+    window.addEventListener('pageshow', function(event) {
+        if (!localStorage.getItem('usuarioId')) window.location.replace('Login.html');
+    });
+
     function openTab(tabId, btn) {
         document.querySelectorAll('.tab-content').forEach(div => div.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
         btn.classList.add('active');
     }
-    window.addEventListener('pageshow', function(event) {
-        // Si no hay ID en el almacenamiento...
-        if (!localStorage.getItem('usuarioId')) {
-            // ... lo mandamos inmediatamente al Login sin dejarlo ver nada
-            window.location.replace('Login.html');
-        }
-    });
-    // (Pega esto dentro de tu script en Perfil.html si quieres que la campana funcione aquí también)
-    window.addEventListener('DOMContentLoaded', async () => {
-        // ... (tu código existente de carga de perfil) ...
 
-        // Cargar notificaciones también en el perfil
-        const idUsuario = localStorage.getItem('usuarioId');
-        try {
-            const res = await fetch(`http://localhost:3000/notificaciones/${idUsuario}`);
-            const data = await res.json();
-            if(data.notificaciones.length > 0) {
-                const badge = document.getElementById('badgeNotif');
-                badge.style.display = 'flex';
-                badge.textContent = data.notificaciones.length;
-                window.listaNotificaciones = data.notificaciones;
-            }
-        } catch(e) {}
-    });
-
-    function mostrarNotificaciones() {
-        // (Copia la misma función mostrarNotificaciones de Principal.html)
-        if(!window.listaNotificaciones || window.listaNotificaciones.length === 0) {
-                alert("No tienes notificaciones pendientes.");
-                return;
-            }
-            
-            let mensaje = "⚠️ PAGOS POR VENCER:\n\n";
-            window.listaNotificaciones.forEach(notif => {
-                const fecha = new Date(notif.fecha_limite_pago).toLocaleDateString();
-                mensaje += `- ${notif.tipo_opcion}: Bs ${notif.monto_total} (Vence: ${fecha})\n`;
-            });
-            mensaje += "\nVe a tu Perfil para pagar.";
-            alert(mensaje);
-    }
-    // --- CARGA INICIAL ---
     window.addEventListener('DOMContentLoaded', async () => {
         const idUsuario = localStorage.getItem('usuarioId');
         if(!idUsuario) { window.location.href = 'Login.html'; return; }
 
         try {
+            // Notificaciones
+            const resNot = await fetch(`http://localhost:3000/notificaciones/${idUsuario}`);
+            const dataNot = await resNot.json();
+            if(dataNot.notificaciones && dataNot.notificaciones.length > 0) {
+                const badge = document.getElementById('badgeNotif');
+                badge.style.display = 'flex'; badge.textContent = dataNot.notificaciones.length;
+                window.listaNotificaciones = dataNot.notificaciones;
+            }
+
+            // Perfil
             const response = await fetch(`http://localhost:3000/perfil-completo/${idUsuario}`);
             const data = await response.json();
 
             if(data.success) {
-                // 1. Header
                 document.getElementById('nombreUsuario').textContent = data.miPerfil.nombre;
                 document.getElementById('codigoPareja').textContent = data.cuenta.codigo || "---";
                 document.getElementById('presupuestoUsuario').textContent = parseFloat(data.cuenta.presupuesto).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
                 const infoP = document.getElementById('infoPareja');
                 data.pareja ? infoP.innerHTML = `Pareja con <span class="partner-name">${data.pareja}</span>` : infoP.textContent = "Comparte tu código.";
 
-                // 2. Limpiar Grids
                 const grids = {
                     'Salon': document.getElementById('gridSalon'),
                     'Decoracion': document.getElementById('gridDecor'),
@@ -400,23 +269,29 @@
                     'Fotografo': document.getElementById('gridFoto'),
                     'Planeador': document.getElementById('gridPlanner')
                 };
-                
                 Object.values(grids).forEach(g => g.innerHTML = '');
 
-                // 3. Llenar Grids
                 data.items.forEach(item => {
                     const div = crearHTMLItem(item);
-                    if (grids[item.tipo_opcion]) {
-                        grids[item.tipo_opcion].appendChild(div);
-                    }
+                    if (grids[item.tipo_opcion]) grids[item.tipo_opcion].appendChild(div);
+                    else if(grids['Catering']) grids['Catering'].appendChild(div);
                 });
-                
-                // Mensajes de vacío (Opcional, por simplicidad lo omito aquí)
             }
         } catch (e) { console.error(e); }
     });
 
-    // --- CREAR TARJETA DE ÍTEM ---
+    function mostrarNotificaciones() {
+        if(!window.listaNotificaciones || window.listaNotificaciones.length === 0) {
+            alert("No tienes notificaciones pendientes."); return;
+        }
+        let mensaje = "⚠️ PAGOS POR VENCER:\n\n";
+        window.listaNotificaciones.forEach(notif => {
+            const fecha = new Date(notif.fecha_limite_pago).toLocaleDateString();
+            mensaje += `- ${notif.tipo_opcion}: Bs ${notif.monto_total} (Vence: ${fecha})\n`;
+        });
+        alert(mensaje);
+    }
+
     function crearHTMLItem(item) {
         const div = document.createElement('div');
         div.className = 'gallery-item';
@@ -426,12 +301,10 @@
         const restante = total - pagado;
         const precioFormato = total.toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
         const restanteFormato = restante.toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
-        
-        // Datos seguros
-        const nombreSafe = (item.nombre_item || 'Producto').replace(/'/g, "\\'");
+
+        const nombreSafe = (item.nombre_item || 'Item').replace(/'/g, "\\'");
         const imgSafe = (item.url_imagen || '').replace(/'/g, "\\'");
         
-        // Descripción según tipo
         let infoHTML = "";
         if (item.tipo_opcion === 'Salon') {
             infoHTML = `
@@ -445,115 +318,84 @@
         }
         const infoSafe = infoHTML.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '');
 
-        // --- LÓGICA DE ESTADO Y BOTONES ---
-        let botonPagoHTML = '';
-        let estadoHTML = '';
-        let botonEliminarHTML = ''; // <--- NUEVO: Control del botón eliminar
+        let btnHTML = '', estadoHTML = '', botonEliminarHTML = '';
 
         if (item.estado_pago === 'Pagado Total' || restante <= 0) {
-            // CASO: PAGADO COMPLETO
-            botonPagoHTML = `<span style="color: green; font-weight:bold; display:block; margin-top:10px; text-align:center; font-size:1.1em;">✔ Completado</span>`;
+            btnHTML = `<span style="color:green; font-weight:bold; display:block; text-align:center; margin-top:10px;">✔ Completado</span>`;
             estadoHTML = `<small style="color:green">Pagado</small>`;
-            // No mostramos botón de eliminar (o mostramos uno deshabilitado)
-            botonEliminarHTML = ''; 
         } 
         else if (item.estado_pago === 'Abonado' || (pagado > 0 && pagado < total)) {
-            // CASO: TIENE ABONO (FALTA SALDO)
-            botonPagoHTML = `
-                <button class="pay-btn" style="background-color:#f39c12;" 
-                    onclick="abrirModalPago(${item.id_reserva}, '${item.tipo_opcion}', '${nombreSafe}', ${total}, ${restante}, '${imgSafe}', '${infoSafe}', true)">
-                    💳 Pagar Restante (${restanteFormato})
-                </button>`;
+            btnHTML = `<button class="pay-btn" style="background-color:#f39c12;" onclick="abrirModalPago(${item.id_reserva}, '${item.tipo_opcion}', '${nombreSafe}', ${total}, ${restante}, '${imgSafe}', '${infoSafe}', true)">💳 Pagar Restante (${restanteFormato})</button>`;
             estadoHTML = `<small style="color:#e67e22; font-weight:bold;">⚠ Pendiente: Bs ${restante}</small>`;
-            
-            // ¡AQUÍ ESTÁ EL CAMBIO! Bloqueamos eliminar si hay dinero
-            botonEliminarHTML = `<button class="delete-btn" style="background:#ccc; cursor:not-allowed;" title="No se puede eliminar si ya hay pagos" onclick="event.stopPropagation(); alert('No puedes eliminar una reserva con pagos realizados.');">🔒</button>`;
+            botonEliminarHTML = `<button class="delete-btn" style="background:#ccc; cursor:not-allowed;" title="Pagos realizados" onclick="event.stopPropagation(); alert('No puedes eliminar con pagos.');">🔒</button>`;
         } 
         else {
-            // CASO: NUEVO (SIN PAGOS)
-            botonPagoHTML = `
-                <button class="pay-btn" 
-                    onclick="abrirModalPago(${item.id_reserva}, '${item.tipo_opcion}', '${nombreSafe}', ${total}, ${total}, '${imgSafe}', '${infoSafe}', false)">
-                    💳 Pagar
-                </button>`;
+            btnHTML = `<button class="pay-btn" onclick="abrirModalPago(${item.id_reserva}, '${item.tipo_opcion}', '${nombreSafe}', ${total}, ${total}, '${imgSafe}', '${infoSafe}', false)">💳 Pagar</button>`;
             estadoHTML = `<small style="color:#e74c3c">Sin pagar</small>`;
-            
-            // Si no ha pagado nada, SÍ puede eliminar
             botonEliminarHTML = `<button class="delete-btn" onclick="eliminarReserva(${item.id_reserva})">X</button>`;
         }
 
-        // --- DETALLES VISUALES TARJETA ---
         let detallesVisuales = '';
         if (item.departamento) detallesVisuales += `<p style="margin: 2px 0; font-size: 0.9em; color:#555;">📍 ${item.departamento}</p>`;
         if (item.tipo_opcion === 'Salon' && item.capacidad) detallesVisuales += `<p style="margin: 2px 0; font-size: 0.9em; color:#555;">👥 Cap: ${item.capacidad}</p>`;
 
         div.innerHTML = `
-            <img src="${item.url_imagen}" alt="${item.nombre_item}" onerror="this.src='https://placehold.co/400x300?text=Sin+Imagen'">
+            <img src="${item.url_imagen}" onerror="this.src='https://placehold.co/400x300?text=Sin+Imagen'">
             <div class="gallery-info">
-                <p style="font-weight:bold; margin-bottom:5px;">${item.nombre_item}</p>
+                <p style="font-weight:bold; margin:0 0 5px;">${item.nombre_item}</p>
                 ${detallesVisuales}
-                <p style="color: #2c3e50; font-weight:bold; margin: 5px 0;">${precioFormato}</p>
+                <p style="color:#2c3e50; font-weight:bold; margin:0;">${precioFormato}</p>
                 ${estadoHTML}
-                ${botonPagoHTML}
+                ${btnHTML}
             </div>
-            ${botonEliminarHTML} `;
+            ${botonEliminarHTML}
+        `;
         return div;
     }
 
-    // --- LÓGICA DEL MODAL ---
     function abrirModalPago(id, tipo, nombre, precioTotal, montoPendiente, imgUrl, infoHTML, isSaldo) {
         reservaActualId = id;
         precioTotalItem = parseFloat(precioTotal);
         esSaldoPendiente = isSaldo;
         esTipoSalon = (tipo === 'Salon');
 
-        // 1. Llenar Izquierda (Info Visual)
         document.getElementById('pagoImg').src = imgUrl;
         document.getElementById('pagoNombreItem').textContent = nombre;
-        document.getElementById('pagoDetalleHTML').innerHTML = infoHTML; // Inyectamos el HTML específico
+        document.getElementById('pagoDetalleHTML').innerHTML = infoHTML;
         document.getElementById('pagoPrecioTotal').textContent = precioTotalItem.toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
 
-        // 2. Configurar Opciones Derecha
-        const divParcial = document.getElementById('opcionParcial');
+        const opcionParcial = document.getElementById('opcionParcial');
         const labelTotal = document.getElementById('labelTotal');
         const radioTotal = document.getElementById('pagoTotal');
 
-        // Reset
         radioTotal.checked = true;
         radioTotal.disabled = false;
-        divParcial.style.display = 'none';
+        opcionParcial.style.display = 'none';
 
         if (esSaldoPendiente) {
-            // Caso: Pagar lo que falta
             labelTotal.textContent = `Pagar Saldo Restante (${montoPendiente} Bs)`;
-            radioTotal.disabled = true; // Es la única opción
+            radioTotal.disabled = true;
             montoAPagarAhora = montoPendiente;
         } 
         else if (esTipoSalon) {
-            // Caso: Salón Nuevo (Opciones 50% / 100%)
             labelTotal.textContent = "Pago Completo (100%)";
-            divParcial.style.display = 'block'; // Mostrar opción parcial
-            montoAPagarAhora = precioTotalItem; // Por defecto
+            opcionParcial.style.display = 'block';
+            montoAPagarAhora = precioTotalItem;
         } 
         else {
-            // Caso: Decoración Nueva (Solo 100%)
             labelTotal.textContent = "Pago Completo (100%)";
             montoAPagarAhora = precioTotalItem;
         }
 
-        checkMetodoPago(); // Resetear vista QR
+        checkMetodoPago();
         actualizarTotalVisual();
         document.getElementById('modalPago').style.display = 'flex';
     }
 
     function calcularTotalPago() {
-        // Solo si tengo opciones (no es saldo obligado)
         if (!esSaldoPendiente && esTipoSalon) {
-            if (document.getElementById('pagoParcial').checked) {
-                montoAPagarAhora = precioTotalItem / 2;
-            } else {
-                montoAPagarAhora = precioTotalItem;
-            }
+            if (document.getElementById('pagoParcial').checked) montoAPagarAhora = precioTotalItem / 2;
+            else montoAPagarAhora = precioTotalItem;
         }
         actualizarTotalVisual();
     }
@@ -561,15 +403,14 @@
     function actualizarTotalVisual() {
         const txt = montoAPagarAhora.toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
         document.getElementById('montoFinalAPagar').textContent = txt;
-        document.getElementById('qrMonto').textContent = txt;
+        if(document.getElementById('seccionQR').style.display === 'block') document.getElementById('qrMonto').textContent = txt;
     }
 
     function checkMetodoPago() {
         const metodo = document.getElementById('metodoPago').value;
         const qr = document.getElementById('seccionQR');
         const card = document.getElementById('seccionTarjeta');
-        
-        if(metodo === 'QR') { qr.style.display = 'block'; card.style.display = 'none'; }
+        if(metodo === 'QR') { qr.style.display = 'block'; card.style.display = 'none'; actualizarTotalVisual(); }
         else { qr.style.display = 'none'; card.style.display = 'block'; }
     }
 
@@ -577,8 +418,6 @@
 
     async function confirmarTransaccion() {
         const metodo = document.getElementById('metodoPago').value;
-        
-        // Definir tipo para BD
         let tipoPagoBD = 'Total';
         if (montoAPagarAhora < precioTotalItem && !esSaldoPendiente) tipoPagoBD = 'Parcial';
 
@@ -596,12 +435,13 @@
                 })
             });
             const data = await res.json();
-            if(data.success) { alert("¡Exito!"); location.reload(); }
+            if(data.success) { alert("¡Pago Exitoso!"); location.reload(); }
             else alert(data.message);
         } catch(e) { console.error(e); }
     }
 
     async function eliminarReserva(id) {
+        if(window.event) window.event.stopPropagation();
         if(!confirm("¿Eliminar reserva?")) return;
         try {
             const res = await fetch('http://localhost:3000/eliminar-reserva', {
@@ -613,13 +453,7 @@
         } catch(e){console.error(e);}
     }
     
-    function cerrarSesion() {
-        localStorage.clear(); // Borra el ID
-        localStorage.removeItem('usuarioId'); // Aseguramos que se borre
-        
-        // Usamos 'replace' para que no se pueda volver atrás con el botón del navegador
-        window.location.replace('Login.html');
-    }
+    function cerrarSesion() { localStorage.clear(); localStorage.removeItem('usuarioId'); window.location.replace('Login.html'); }
 </script>
 </body>
 </html>

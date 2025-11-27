@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Tablero - Wedding Planner</title>
+    <title>Catálogo - Wedding Planner</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -28,257 +28,192 @@
         .user-info h3 { margin: 0; color: #333; }
         .user-info p { margin: 0; color: #555; font-size: 14px; }
 
-        /* --- Menú Desplegable --- */
-        .menu-dropdown { position: relative; display: inline-block; }
-        .menu-btn {
-            background-color: #06831fc8;
-            color: white;
-            padding: 10px 15px;
-            font-size: 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            right: 0;
-            background-color: #f9f9f9;
-            min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .dropdown-content a {
-            color: black;
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-            font-size: 14px;
-        }
-        .dropdown-content a:hover { background-color: #ddd; }
-        .menu-dropdown:hover .dropdown-content { display: block; }
-        .menu-dropdown:hover .menu-btn { background-color: #064210; }
-        
-        /* Estilos para los nuevos iconos del header */
-        .nav-icons {
-            display: flex;
-            align-items: center;
-            gap: 20px; /* Espacio entre iconos */
-        }
-
+        /* --- Iconos Header --- */
+        .nav-icons { display: flex; align-items: center; gap: 20px; }
         .nav-btn-icon {
-            background: none;
-            border: none;
-            font-size: 24px; /* Tamaño del emoji/icono */
-            cursor: pointer;
-            color: #555;
-            transition: transform 0.2s, color 0.2s;
-            position: relative;
-            text-decoration: none; /* Para los <a> */
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: none; border: none; font-size: 24px; cursor: pointer;
+            color: #555; transition: transform 0.2s, color 0.2s; position: relative;
+            text-decoration: none; display: flex; align-items: center; justify-content: center;
         }
+        .nav-btn-icon:hover { transform: scale(1.2); color: #3498db; }
 
-            .nav-btn-icon:hover {
-                transform: scale(1.2);
-                color: #3498db;
-            }
-
-            /* Tooltip (texto al pasar el mouse) */
-            .nav-btn-icon:hover::after {
-                content: attr(title); /* Usa el atributo title del HTML */
-                position: absolute;
-                bottom: -25px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: rgba(0,0,0,0.8);
-                color: white;
-                font-size: 12px;
-                padding: 4px 8px;
-                border-radius: 4px;
-                white-space: nowrap;
-                pointer-events: none;
-            }
-        /* --- SIDEBAR DE PREFERENCIAS --- */
+        /* --- SIDEBAR --- */
         .gallery-container {
-            column-count: 4;
-            column-gap: 15px;
-            padding: 20px;
-            /* Dejamos espacio a la izquierda para el sidebar */
-            margin-left: 260px; 
-            max-width: calc(100% - 280px);
+            column-count: 4; column-gap: 15px; padding: 20px;
+            margin-left: 260px; max-width: calc(100% - 280px);
         }
 
         .sidebar {
-            position: fixed;
-            top: 80px;
-            left: 10px;
-            width: 220px;
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            z-index: 900;
-            height: calc(100vh - 120px);
-            overflow-y: auto;
+            position: fixed; top: 80px; left: 10px; width: 220px;
+            background: white; padding: 20px; border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 900;
+            height: calc(100vh - 120px); overflow-y: auto;
+            transition: left 0.3s ease;
         }
+
         .sidebar label { display: block; margin-top: 15px; font-weight: bold; color: #555; font-size: 0.9em; }
         .sidebar select, .sidebar input {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-sizing: border-box;
+            width: 100%; padding: 10px; margin-top: 5px;
+            border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;
         }
         .btn-filter {
-            width: 100%;
-            background: #06831fc8;
-            color: white;
-            border: none;
-            padding: 10px;
-            margin-top: 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
+            width: 100%; background: #06831fc8; color: white; border: none;
+            padding: 10px; margin-top: 20px; border-radius: 8px; cursor: pointer; font-weight: bold;
         }
-        .btn-filter:hover { background: #064210; }
 
-        /* --- Galería --- */
+        /* Móvil: Botones y Overlay */
+        .close-sidebar-btn { display: none; text-align: right; font-size: 24px; cursor: pointer; color: #888; margin-bottom: 10px; }
+        .mobile-filter-btn {
+            display: none; position: fixed; bottom: 20px; right: 20px;
+            background-color: #3498db; color: white; border: none;
+            padding: 15px 20px; border-radius: 50px; font-size: 16px; font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1100; cursor: pointer;
+        }
+        .overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 850;
+        }
+
+        /* --- GALERÍA --- */
         .gallery-item {
-            display: inline-block;
-            width: 100%;
-            margin-bottom: 15px;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            animation: fadeIn 0.5s ease-in;
-            position: relative;
-            background: white;
+            display: inline-block; width: 100%; margin-bottom: 15px;
+            border-radius: 10px; overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); position: relative; background: white;
+            transition: transform 0.2s;
         }
+        .gallery-item:hover { transform: translateY(-3px); }
+        .gallery-item img { width: 100%; height: auto; display: block; cursor: pointer; }
+        .gallery-info { padding: 10px; text-align: center; }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .gallery-item img { 
-            width: 100%; height: auto; display: block; cursor: pointer; transition: 0.3s;
-        }
-        .gallery-item img:hover { opacity: 0.9; }
-        
-        .gallery-item p {
-            margin: 0; padding: 10px; background-color: #fff;
-            text-align: center; font-weight: bold; color: #444; font-size: 0.9em;
-        }
-
         .select-btn {
-            display: none;
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 12px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 10;
+            display: none; position: absolute; top: 10px; right: 10px;
+            background-color: #e74c3c; color: white; border: none;
+            padding: 8px 12px; border-radius: 20px; cursor: pointer;
+            font-weight: bold; font-size: 12px; z-index: 10;
         }
         .gallery-item:hover .select-btn { display: block; }
-        .select-btn:hover { background-color: #c0392b; }
-        
-        /* --- MODAL (ESTILOS NUEVOS) --- */
+
+        /* --- MODAL (ARREGLADO) --- */
         .modal {
-            display: none; 
-            position: fixed;
-            z-index: 2000;
-            left: 0; top: 0;
-            width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
-            justify-content: center;
-            align-items: center;
+            display: none; position: fixed; z-index: 3000; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px); justify-content: center; align-items: center;
             animation: fadeIn 0.3s;
+            padding: 10px; box-sizing: border-box; /* Margen de seguridad */
         }
 
         .modal-content {
-            background-color: white;
-            padding: 0;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 800px;
-            display: flex;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            position: relative;
+            background-color: white; padding: 0; border-radius: 15px;
+            width: 100%; max-width: 900px; 
+            display: flex; 
+            overflow: hidden; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative;
+            max-height: 90vh; /* Altura máxima en PC */
         }
 
-        .modal-img-container { width: 50%; background: #f0f0f0; }
+        .modal-img-container { 
+            width: 50%; background: #000; display: flex; align-items: center; justify-content: center; 
+        }
         .modal-img-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-        .modal-details { width: 50%; padding: 40px; display: flex; flex-direction: column; justify-content: center; }
-        .modal-details h2 { margin-top: 0; color: #333; }
-        .modal-details .price { color: #27ae60; font-size: 1.5em; font-weight: bold; margin: 10px 0; }
-        .modal-details .desc { color: #666; line-height: 1.6; margin-bottom: 20px; }
-        .modal-meta { font-size: 0.9em; color: #888; margin-bottom: 20px; border-top: 1px solid #eee; padding-top: 10px; }
+        .modal-details { 
+            width: 50%; padding: 30px; 
+            display: flex; flex-direction: column; 
+            overflow-y: auto; /* Scroll interno si es necesario en PC */
+        }
+
+        .modal-details h2 { margin-top: 0; color: #333; font-size: 1.8em; line-height: 1.2; }
+        .modal-details .price { color: #27ae60; font-size: 1.8em; font-weight: bold; margin: 10px 0; }
+        
+        /* Contenedor de extras para que resalten */
+        #mExtrasSalon {
+            background: #f8f9fa; border-left: 4px solid #3498db;
+            padding: 15px; margin: 15px 0; border-radius: 4px;
+        }
 
         .close-modal {
-            position: absolute;
-            top: 15px; right: 20px;
-            color: #aaa; font-size: 30px; font-weight: bold; cursor: pointer; z-index: 10;
+            position: absolute; top: 15px; right: 15px;
+            color: #555; font-size: 28px; font-weight: bold; cursor: pointer; z-index: 20;
+            background: rgba(255,255,255,0.9); border-radius: 50%;
+            width: 40px; height: 40px; text-align: center; line-height: 40px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        .close-modal:hover { color: #000; }
 
-        @media (max-width: 768px) {
-            .modal-content { flex-direction: column; max-height: 90vh; overflow-y: auto; }
-            .modal-img-container, .modal-details { width: 100%; }
-            .modal-img-container { height: 250px; }
-            .sidebar { display: none; } 
-            .gallery-container { margin-left: 0; max-width: 100%; column-count: 2; }
-        }
-        @media (max-width: 480px) { .gallery-container { column-count: 1; } }
-
-        .loading-indicator {
-            display: none; text-align: center; padding: 20px; font-weight: bold; color: #555; font-size: 1.1em;
-        }
+        .loading-indicator { display: none; text-align: center; padding: 20px; font-weight: bold; color: #555; }
         .loading-indicator.show { display: block; }
+
+        /* --- RESPONSIVIDAD (EL ARREGLO FINAL) --- */
+        @media (max-width: 768px) {
+            /* Sidebar Móvil */
+            .mobile-filter-btn { display: block; }
+            .sidebar { left: -100%; top: 0; height: 100vh; width: 85%; max-width: 300px; z-index: 2500; border-radius: 0; }
+            .sidebar.active { left: 0; }
+            .overlay.active { display: block; }
+            .close-sidebar-btn { display: block; }
+            .gallery-container { margin-left: 0; max-width: 100%; column-count: 2; padding: 10px; }
+
+            /* MODAL MÓVIL */
+            .modal-content { 
+                flex-direction: column; /* Apilar verticalmente */
+                width: 100%; 
+                height: auto; 
+                max-height: 95vh; /* Casi toda la altura */
+                overflow-y: auto; /* ¡SCROLL EN TODO EL MODAL! */
+            }
+            
+            .modal-img-container { 
+                width: 100%; 
+                height: 250px; /* Altura fija para imagen */
+                flex-shrink: 0; 
+            }
+            
+            .modal-details { 
+                width: 100%; 
+                padding: 20px; 
+                height: auto; 
+                overflow: visible; /* Dejar que crezca */
+                box-sizing: border-box;
+            }
+
+            /* Botón flotante fijo abajo en el modal móvil (opcional, aquí lo dejo normal al final) */
+            #mBotonGuardar {
+                width: 100%; margin-top: 20px; padding: 15px; font-size: 1.1em;
+                margin-bottom: 20px; /* Espacio extra al final para el scroll */
+            }
+        }
+
+        @media (max-width: 480px) { 
+            .gallery-container { column-count: 1; } 
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
+
+    <div id="mobileOverlay" class="overlay" onclick="toggleSidebar()"></div>
+    <button class="mobile-filter-btn" onclick="toggleSidebar()">⚙️ Filtros</button>
 
     <header class="top-bar">
         <div class="user-info">
             <h3 id="userName">Cargando...</h3>
             <p id="userBudget">Presupuesto: $...</p>
         </div>
-        
         <div class="nav-icons">
             <div class="nav-btn-icon" onclick="mostrarNotificaciones()" title="Notificaciones">
-                🔔
-                <span id="badgeNotif" style="display:none; position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:16px; height:16px; font-size:10px; justify-content:center; align-items:center;">0</span>
+                🔔 <span id="badgeNotif" style="display:none; position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:16px; height:16px; font-size:10px; justify-content:center; align-items:center;">0</span>
             </div>
-
-            <a href="Perfil.html" class="nav-btn-icon" title="Mi Perfil">
-                👤
-            </a>
-
-            <button class="nav-btn-icon" onclick="cerrarSesion()" title="Cerrar Sesión" style="color: #e74c3c;">
-                🚪
-            </button>
+            <a href="Perfil.html" class="nav-btn-icon" title="Mi Perfil">👤</a>
+            <button class="nav-btn-icon" onclick="cerrarSesion()" title="Cerrar Sesión" style="color: #e74c3c;">🚪</button>
         </div>
     </header>
 
-    <aside class="sidebar centered ">
+    <aside class="sidebar centered" id="sidebarMenu">
+        <div class="close-sidebar-btn" onclick="toggleSidebar()">✖</div>
         <h3 style="color: #465d6c; margin-top: 0;">Preferencias</h3>
-        <label>Presupuesto Máximo (Item)</label>
-        <input type="number" id="filterPresupuesto" placeholder="Ej: 5000">
+        
+        <label>Presupuesto Máximo</label>
+        <input type="number" id="filterPresupuesto" placeholder="Ej: 5000" min="0">
+        
         <label>Departamento</label>
         <select id="filterDpto">
             <option value="">Todos (Bolivia)</option>
@@ -294,7 +229,7 @@
         </select>
 
         <label>Capacidad (Salones)</label>
-        <input type="number" id="filterCap" placeholder="Mínimo de personas">
+        <input type="number" id="filterCap" placeholder="Mínimo de personas" min="0">
 
         <label>Fecha Boda</label>
         <input type="date" id="filterDate">
@@ -302,46 +237,46 @@
         <button class="btn-filter" onclick="aplicarFiltros()">Aplicar Preferencias</button>
     </aside>
 
-    <main class="gallery-container" id="galleryContainer">
-    </main>
-
-    <div class="loading-indicator" id="loadingIndicator">
-        Cargando más ideas...
-    </div>
+    <main class="gallery-container" id="galleryContainer"></main>
+    <div class="loading-indicator" id="loadingIndicator">Cargando...</div>
 
     <div id="detalleModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="cerrarModal()">&times;</span>
             
             <div class="modal-img-container">
-                <img id="mImagen" src="" alt="Detalle">
+                <img id="mImagen" src="" alt="Detalle" onerror="this.src='https://placehold.co/400x300?text=Sin+Imagen'">
             </div>
             
             <div class="modal-details">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <small id="mTipo" style="text-transform: uppercase; color: #3498db; font-weight:bold; letter-spacing: 1px;">CATEGORÍA</small>
-                    <small id="mDpto" style="color: #888;">Ubicación</small>
                 </div>
                 
-                <h2 id="mTitulo" style="margin: 10px 0;">Título del Producto</h2>
-                <p id="mPrecio" class="price" style="font-size: 1.8em; color: #27ae60; margin: 0;">Bs 0.00</p>
+                <h2 id="mTitulo">Título del Producto</h2>
                 
-                <div style="margin-top: 20px;">
+                <p style="color:#666; margin-top:-10px; margin-bottom:15px; font-size:0.95em;">
+                    📍 <span id="mDpto">Ubicación</span>
+                </p>
+
+                <p id="mPrecio" class="price">Bs 0.00</p>
+                
+                <div style="margin-bottom: 20px;">
                     <strong>Descripción:</strong>
-                    <p id="mDescripcion" class="desc" style="color: #555; line-height: 1.5;">...</p>
+                    <p id="mDescripcion" class="desc" style="margin-top:5px;">...</p>
                 </div>
 
-                <div id="mExtrasSalon" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none;">
-                    <p style="margin: 5px 0;">👥 <strong>Capacidad:</strong> <span id="mCapacidad">...</span> personas</p>
-                    <p style="margin: 5px 0;">🪑 <strong>Mesas:</strong> <span id="mMesas">...</span></p>
-                    <p style="margin: 5px 0;">🍽️ <strong>Cubiertos/Mantelería:</strong> <span id="mCubiertos">...</span></p>
+                <div id="mExtrasSalon" style="display: none;">
+                    <p>👥 <strong>Capacidad:</strong> <span id="mCapacidad">...</span> personas</p>
+                    <p>🪑 <strong>Mesas:</strong> <span id="mMesas">...</span></p>
+                    <p>🍽️ <strong>Cubiertos:</strong> <span id="mCubiertos">...</span></p>
                 </div>
 
-                <div class="modal-meta">
-                    <p>📅 Reserva con: <span id="mReglaPago">...</span> meses de anticipación</p>
+                <div class="modal-meta" style="border-top:1px solid #eee; padding-top:15px; margin-top:10px;">
+                    <p style="color:#888; font-size:0.9em;">📅 Reserva con: <span id="mReglaPago">...</span> meses de anticipación</p>
                 </div>
 
-                <button id="mBotonGuardar" class="select-btn" style="width: 100%; padding: 15px; font-size: 1.1em; position: relative; display: block;">
+                <button id="mBotonGuardar" class="btn-filter" style="width:100%; font-size:1.1em; padding:12px;">
                     ❤ Guardar en mi Perfil
                 </button>
             </div>
@@ -349,133 +284,89 @@
     </div>
 
 <script>
-    // --- VARIABLES GLOBALES ---
     let isLoading = false;
     const galleryContainer = document.getElementById('galleryContainer');
     const loadingIndicator = document.getElementById('loadingIndicator');
-    
     let productosDelCatalogo = []; 
     let productosMostrados = 0;
 
-    // --- 1. AL CARGAR LA PÁGINA ---
-    // --- 1. AL CARGAR LA PÁGINA (CORREGIDO) ---
+    function toggleSidebar() {
+        document.getElementById('sidebarMenu').classList.toggle('active');
+        document.getElementById('mobileOverlay').classList.toggle('active');
+    }
+
+    // VALIDACIÓN INPUTS
+    const inputsValidar = [document.getElementById('filterPresupuesto'), document.getElementById('filterCap')];
+    inputsValidar.forEach(input => {
+        input.addEventListener('keydown', function(e) { if (["-", "+", "e", ".", ","].includes(e.key)) e.preventDefault(); });
+        input.addEventListener('input', function() { this.value = this.value.replace(/[^0-9]/g, ''); });
+    });
+
+    // CARGA INICIAL
     window.addEventListener('DOMContentLoaded', async () => {
         const idUsuario = localStorage.getItem('usuarioId');
-        
-        if (!idUsuario) {
-            window.location.href = 'Login.html';
-            return;
-        }
+        if (!idUsuario) { window.location.href = 'Login.html'; return; }
 
-        let presupuestoInicial = null; // Variable temporal
+        // Notificaciones
+        try {
+            const res = await fetch(`http://localhost:3000/notificaciones/${idUsuario}`);
+            const data = await res.json();
+            if(data.notificaciones.length > 0) {
+                const badge = document.getElementById('badgeNotif');
+                badge.style.display = 'flex'; badge.textContent = data.notificaciones.length;
+                window.listaNotificaciones = data.notificaciones;
+            }
+        } catch(e) {}
 
-        // A. Cargar Info del Header y Presupuesto Guardado
+        // Header y Filtros Guardados
+        let presupuestoInicial = null;
+        let capacidadInicial = null;
         try {
             const response = await fetch(`http://localhost:3000/header-info/${idUsuario}`);
             const data = await response.json();
-
             if (data.success) {
-                // 1. Mostrar datos visuales
                 const presRaw = data.usuario.presupuesto_estimado;
                 let presVisual = parseFloat(presRaw).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
                 
                 document.getElementById('userName').textContent = data.usuario.nombre;
                 document.getElementById('userBudget').textContent = `Presupuesto: ${presVisual}`;
                 
-                // 2. Llenar el input del sidebar
                 document.getElementById('filterPresupuesto').value = presRaw;
+                document.getElementById('filterCap').value = data.usuario.cantidad_invitados || '';
                 
-                // 3. Guardar el valor para usarlo en el filtro inmediatamente
                 presupuestoInicial = presRaw;
+                capacidadInicial = data.usuario.cantidad_invitados;
             }
-        } catch (error) { 
-            console.error("Error cargando header:", error); 
-        }
+        } catch (error) { console.error(error); }
 
-        // B. Cargar el Catálogo (ENVIANDO EL PRESUPUESTO RECUPERADO)
-        // Si 'presupuestoInicial' es null, enviará undefined (comportamiento normal si es cuenta nueva)
-        // Si tiene valor (ej. 25000), lo enviará y el servidor filtrará.
-        await loadInitialImages(idUsuario, { presupuesto: presupuestoInicial });
-    });
-
-    // --- 1. AL CARGAR LA PÁGINA (Pre-llenar presupuesto) ---
-    window.addEventListener('DOMContentLoaded', async () => {
-        const idUsuario = localStorage.getItem('usuarioId');
-        if (!idUsuario) { window.location.href = 'Login.html'; return; }
-
-        // A. Header y Pre-llenado de filtros
-        try {
-            const response = await fetch(`http://localhost:3000/header-info/${idUsuario}`);
-            const data = await response.json();
-
-            if (data.success) {
-                // Mostrar en el header
-                let presupuestoFormatted = parseFloat(data.usuario.presupuesto_estimado).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
-                document.getElementById('userName').textContent = data.usuario.nombre;
-                document.getElementById('userBudget').textContent = `Presupuesto: ${presupuestoFormatted}`;
-                
-                // NUEVO: Pre-llenar el input del filtro con el presupuesto guardado
-                document.getElementById('filterPresupuesto').value = data.usuario.presupuesto_estimado;
-                
-                // Cargar catálogo INICIAL usando ese presupuesto por defecto
-                loadInitialImages(idUsuario, { presupuesto: data.usuario.presupuesto_estimado });
-            }
-        } catch (error) { console.error("Error cargando header:", error); }
-    });
-    // --- CONTROL DE NOTIFICACIONES ---
-    window.addEventListener('DOMContentLoaded', async () => {
-        const idUsuario = localStorage.getItem('usuarioId');
-        if(idUsuario) {
-            try {
-                const res = await fetch(`http://localhost:3000/notificaciones/${idUsuario}`);
-                const data = await res.json();
-                const lista = data.notificaciones;
-                
-                if(lista.length > 0) {
-                    const badge = document.getElementById('badgeNotif');
-                    badge.style.display = 'flex';
-                    badge.textContent = lista.length;
-                    
-                    // Guardamos los datos para mostrarlos al click
-                    window.listaNotificaciones = lista; 
-                }
-            } catch(e) { console.error(e); }
-        }
+        await loadInitialImages(idUsuario, { presupuesto: presupuestoInicial, capacidad: capacidadInicial });
     });
 
     function mostrarNotificaciones() {
         if(!window.listaNotificaciones || window.listaNotificaciones.length === 0) {
-            alert("No tienes notificaciones pendientes.");
-            return;
+            alert("No tienes notificaciones pendientes."); return;
         }
-        
         let mensaje = "⚠️ PAGOS POR VENCER:\n\n";
         window.listaNotificaciones.forEach(notif => {
             const fecha = new Date(notif.fecha_limite_pago).toLocaleDateString();
             mensaje += `- ${notif.tipo_opcion}: Bs ${notif.monto_total} (Vence: ${fecha})\n`;
         });
-        mensaje += "\nVe a tu Perfil para pagar.";
         alert(mensaje);
     }
 
-    // --- 2. FUNCIÓN DE CARGA (Aceptar presupuesto) ---
+    // CARGAR CATÁLOGO
     async function loadInitialImages(idUsuario, filtros = {}) {
         if (isLoading) return;
         isLoading = true;
         loadingIndicator.classList.add('show');
-        galleryContainer.innerHTML = ''; 
-        productosMostrados = 0; 
+        galleryContainer.innerHTML = ''; productosMostrados = 0; 
 
         try {
             let url = `http://localhost:3000/catalogo-personalizado/${idUsuario}?`;
-            
             if (filtros.fecha) url += `&fecha=${filtros.fecha}`;
             if (filtros.dpto) url += `&dpto=${encodeURIComponent(filtros.dpto)}`;
             if (filtros.capacidad) url += `&capacidad=${filtros.capacidad}`;
-            // NUEVO PARÁMETRO
             if (filtros.presupuesto) url += `&presupuesto=${filtros.presupuesto}`;
-
-            console.log("Consultando:", url);
 
             const response = await fetch(url);
             const data = await response.json();
@@ -484,71 +375,38 @@
                 productosDelCatalogo = data.productos;
                 addImagesToDOM();
             } else {
-                galleryContainer.innerHTML = `<div style="text-align:center; width:100%; grid-column: 1 / -1; color:#666; padding: 40px;"><h3>No hay resultados.</h3><p>Intenta aumentar el presupuesto o cambiar los filtros.</p></div>`;
+                galleryContainer.innerHTML = `<div style="text-align:center; width:100%; padding:40px; color:#666;"><h3>No hay resultados.</h3><p>Intenta ajustar tus filtros.</p></div>`;
             }
-        } catch (error) {
-            console.error(error);
-            galleryContainer.innerHTML = "<p>Error de conexión.</p>";
-        } finally {
-            isLoading = false;
-            loadingIndicator.classList.remove('show');
-        }
+        } catch (error) { console.error(error); } 
+        finally { isLoading = false; loadingIndicator.classList.remove('show'); }
     }
 
-    // --- 3. BOTÓN APLICAR (Leer el input) ---
-// --- FUNCIÓN APLICAR FILTROS (CORREGIDA) ---
-    // --- 3. BOTÓN APLICAR (GUARDAR Y FILTRAR - VERSIÓN CORRECTA) ---
+    // APLICAR FILTROS (GUARDA Y RECARGA)
     async function aplicarFiltros() {
         const idUsuario = localStorage.getItem('usuarioId');
-        
-        // 1. Obtener valores de los inputs
         const dpto = document.getElementById('filterDpto').value;
         const cap = document.getElementById('filterCap').value;
         const fecha = document.getElementById('filterDate').value;
-        const nuevoPresupuesto = document.getElementById('filterPresupuesto').value;
+        const pres = document.getElementById('filterPresupuesto').value;
         
-        // 2. SI HAY UN NUEVO PRESUPUESTO, GUARDARLO EN LA BD
-        if (nuevoPresupuesto && nuevoPresupuesto.trim() !== "") {
+        if (pres || cap) {
             try {
-                // Petición al servidor para actualizar la CuentaPareja
-                const saveRes = await fetch('http://localhost:3000/actualizar-presupuesto', {
+                const res = await fetch('http://localhost:3000/actualizar-preferencias', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        idUsuario: idUsuario, 
-                        nuevoPresupuesto: nuevoPresupuesto 
-                    })
+                    body: JSON.stringify({ idUsuario, nuevoPresupuesto: pres, nuevaCapacidad: cap })
                 });
-                
-                if(saveRes.ok) {
-                    console.log("Presupuesto guardado exitosamente en BD.");
-                    
-                    // --- ACTUALIZACIÓN VISUAL INMEDIATA ---
-                    const presFormat = parseFloat(nuevoPresupuesto).toLocaleString('es-ES', { 
-                        style: 'currency', 
-                        currency: 'BOB' 
-                    });
-                    document.getElementById('userBudget').textContent = `Presupuesto: ${presFormat}`;
-                } else {
-                    console.error("Error del servidor al guardar presupuesto");
+                if(res.ok && pres) {
+                    const fmt = parseFloat(pres).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
+                    document.getElementById('userBudget').textContent = `Presupuesto: ${fmt}`;
                 }
-            } catch (e) { 
-                console.error("Error de conexión al guardar:", e); 
-            }
+            } catch (e) { console.error(e); }
         }
-
-        // 3. RECARGAR EL CATÁLOGO CON LOS FILTROS APLICADOS
-        console.log("Aplicando filtro con presupuesto:", nuevoPresupuesto);
-        
-        loadInitialImages(idUsuario, { 
-            fecha: fecha, 
-            dpto: dpto, 
-            capacidad: cap,
-            presupuesto: nuevoPresupuesto // Enviamos el valor explícitamente
-        });
+        if(window.innerWidth <= 768) toggleSidebar();
+        loadInitialImages(idUsuario, { fecha, dpto, capacidad: cap, presupuesto: pres });
     }
 
-    // --- 3. PINTAR IMÁGENES ---
+    // RENDERIZADO
     function addImagesToDOM() {
         const limite = Math.min(productosMostrados + 10, productosDelCatalogo.length);
         for (let i = productosMostrados; i < limite; i++) {
@@ -560,111 +418,71 @@
     function createImageItem(producto) { 
         const item = document.createElement('div');
         item.className = 'gallery-item';
-
-        const imageUrl = producto.url_imagen; 
-        const titulo = producto.nombre_item;
         const precio = parseFloat(producto.costo_base).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
-
-        const img = document.createElement('img');
-        img.src = imageUrl; 
-        img.alt = titulo;
-        img.onerror = function() { this.src = 'https://placehold.co/400x300?text=Sin+Imagen'; };
         
-        // ABRIR MODAL AL CLIC
-        img.onclick = () => abrirModal(producto);
-
-        const p = document.createElement('p');
-        p.innerHTML = `<strong>${titulo}</strong><br><span style="color:#27ae60; font-size:0.9em;">${precio}</span>`;
-
-        const btn = document.createElement('button');
-        btn.className = 'select-btn';
-        btn.textContent = '❤ Seleccionar';
-        btn.onclick = (e) => {
-            e.stopPropagation(); 
-            guardarItem(producto); 
-        };
-
-        item.appendChild(img);
-        item.appendChild(p);
-        item.appendChild(btn);
-        
+        item.innerHTML = `
+            <img src="${producto.url_imagen}" onerror="this.src='https://placehold.co/400x300?text=Sin+Imagen'">
+            <div class="gallery-info">
+                <p style="font-weight:bold; margin-bottom:5px;">${producto.nombre_item}</p>
+                <p style="color:#27ae60;">${precio}</p>
+                <button class="select-btn" onclick="event.stopPropagation(); guardarItem('${producto.id}', '${producto.tipo}', '${producto.costo_base}', '${producto.regla_pago_meses}')">❤ Seleccionar</button>
+            </div>
+        `;
+        item.querySelector('img').onclick = () => abrirModal(producto);
         return item;
     }
 
-    // --- 4. LÓGICA DEL MODAL (NUEVO) ---
+    // MODAL
     function abrirModal(producto) {
         const modal = document.getElementById('detalleModal');
-        
         document.getElementById('mImagen').src = producto.url_imagen;
         document.getElementById('mTitulo').textContent = producto.nombre_item;
         document.getElementById('mTipo').textContent = producto.tipo;
-        document.getElementById('mDpto').textContent = "📍 " + producto.departamento;
+        document.getElementById('mDpto').textContent = producto.departamento || 'Bolivia';
         document.getElementById('mPrecio').textContent = parseFloat(producto.costo_base).toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
-        document.getElementById('mDescripcion').textContent = producto.descripcion || "Sin descripción detallada.";
+        document.getElementById('mDescripcion').textContent = producto.descripcion || "Sin descripción.";
         document.getElementById('mReglaPago').textContent = producto.regla_pago_meses;
 
-        // Extras solo para salón
         const divExtras = document.getElementById('mExtrasSalon');
         if (producto.tipo === 'Salon') {
             divExtras.style.display = 'block';
             document.getElementById('mCapacidad').textContent = producto.capacidad || "N/A";
-            document.getElementById('mMesas').innerHTML = producto.incluye_mesas ? '<span style="color:green">✔ Sí</span>' : '<span style="color:red">✘ No</span>';
-            document.getElementById('mCubiertos').innerHTML = producto.incluye_cubiertos ? '<span style="color:green">✔ Sí</span>' : '<span style="color:red">✘ No</span>';
-        } else {
-            divExtras.style.display = 'none';
-        }
+            document.getElementById('mMesas').innerHTML = producto.incluye_mesas ? '<span style="color:green">✔ Incluidas</span>' : '<span style="color:red">✘ No</span>';
+            document.getElementById('mCubiertos').innerHTML = producto.incluye_cubiertos ? '<span style="color:green">✔ Incluidos</span>' : '<span style="color:red">✘ No</span>';
+        } else { divExtras.style.display = 'none'; }
 
-        // Botón del modal
-        const btn = document.getElementById('mBotonGuardar');
-        btn.onclick = () => {
-            guardarItem(producto);
+        document.getElementById('mBotonGuardar').onclick = () => {
+            guardarItem(producto.id, producto.tipo, producto.costo_base, producto.regla_pago_meses);
             cerrarModal();
         };
-
         modal.style.display = "flex";
     }
+    function cerrarModal() { document.getElementById('detalleModal').style.display = "none"; }
+    window.onclick = (e) => { if (e.target == document.getElementById('detalleModal')) cerrarModal(); };
 
-    function cerrarModal() {
-        document.getElementById('detalleModal').style.display = "none";
-    }
-
-    window.onclick = function(event) {
-        if (event.target == document.getElementById('detalleModal')) {
-            cerrarModal();
-        }
-    }
-
-    // --- 5. OTROS ---
+    // SCROLL INFINITO
     window.addEventListener('scroll', () => {
-        if (isLoading) return;
-        if (window.innerHeight + window.scrollY >= document.documentElement.offsetHeight - 100) {
-            addImagesToDOM();
-        }
+        if (!isLoading && window.innerHeight + window.scrollY >= document.documentElement.offsetHeight - 100) addImagesToDOM();
     });
 
-    async function guardarItem(producto) { 
+    // GUARDAR
+    async function guardarItem(id, tipo, costo, regla) { 
         const idUsuario = localStorage.getItem('usuarioId');
         try {
-            const response = await fetch('http://localhost:3000/crear-reserva', {
+            const res = await fetch('http://localhost:3000/crear-reserva', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    id_usuario: idUsuario, 
-                    id_opcion: producto.id, 
-                    tipo_opcion: producto.tipo, 
-                    monto_total: producto.costo_base, 
-                    regla_pago_meses: producto.regla_pago_meses 
-                })
+                body: JSON.stringify({ id_usuario: idUsuario, id_opcion: id, tipo_opcion: tipo, monto_total: costo, regla_pago_meses: regla })
             });
-            const data = await response.json();
-            if(data.success) alert("¡Guardado!");
-            else alert("Error: " + data.message);
+            const data = await res.json();
+            if(data.success) alert("¡Guardado!"); else alert("Error: " + data.message);
         } catch (e) { console.error(e); }
     }
 
     function cerrarSesion() {
         localStorage.clear();
-        window.location.href = 'Login.html';
+        localStorage.removeItem('usuarioId');
+        window.location.replace('Login.html');
     }
 </script>
 </body>

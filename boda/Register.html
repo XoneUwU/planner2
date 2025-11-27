@@ -331,7 +331,7 @@
             }, 500);
         }
     });
-
+   
     // --- LÓGICA DEL PASO 1 ---
     document.getElementById('formStep1').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -428,6 +428,21 @@
             messageDiv.textContent = "Error al conectar con el servidor";
         }
     }
+    // --- VALIDACIÓN ESTRICTA: SOLO NÚMEROS POSITIVOS ---
+    // Evita +, -, e, puntos y cualquier otro símbolo
+    const inputPresupuesto = document.getElementById('presupuesto');
+    
+    inputPresupuesto.addEventListener('input', function() {
+        // Reemplaza todo lo que NO sea un número (0-9) por vacío
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
+    // (Opcional) Bloqueo extra al presionar teclas para mejor sensación
+    inputPresupuesto.addEventListener('keydown', function(e) {
+        if (["-", "+", "e", ".", ","].includes(e.key)) {
+            e.preventDefault();
+        }
+    });
 </script>
 
 </body>
