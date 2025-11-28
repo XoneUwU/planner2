@@ -326,6 +326,7 @@ app.get('/perfil-completo/:id', async (req, res) => {
 });
 
 // 2. RUTA CREAR RESERVA (ACTUALIZADA: BLOQUEA DUPLICADOS)
+// 6. RUTA CREAR RESERVA (CON BLOQUEO DE SALONES MÚLTIPLES)
 app.post('/crear-reserva', async (req, res) => {
     const { id_usuario, id_opcion, tipo_opcion, monto_total, regla_pago_meses } = req.body;
 
@@ -337,49 +338,45 @@ app.post('/crear-reserva', async (req, res) => {
     try {
         await client.query('BEGIN');
 
-        // Obtener ID Cuenta
         const userRes = await client.query('SELECT fk_cuentapareja_id FROM Usuario WHERE id_usuario = $1', [id_usuario]);
-        const idCuentaPareja = userRes.rows[0].fk_cuentapareja_id;
+        const idCuenta = userRes.rows[0].fk_cuentapareja_id;
 
-        // --- VALIDACIÓN DE DUPLICADOS ---
-        const checkDuplicado = await client.query(
-            `SELECT id_reserva FROM Reserva 
-             WHERE fk_cuentapareja_id = $1 
-             AND fk_opcion_id = $2 
-             AND tipo_opcion = $3 
-             AND estado_pago != 'Cancelado'`,
-            [idCuentaPareja, id_opcion, tipo_opcion]
-        );
+        // --- NUEVA VALIDACIÓN: REGLA DE EXCLUSIVIDAD DE SALÓN ---
+        if (tipo_opcion === 'Salon') {
+            // Verificar si YA existe un salón con dinero de por medio (Abonado o Pagado)
+            const checkSalonComprometido = await client.query(
+                `SELECT id_reserva FROM Reserva 
+                 WHERE fk_cuentapareja_id = $1 
+                 AND tipo_opcion = 'Salon' 
+                 AND estado_pago IN ('Abonado', 'Pagado Total')`,
+                [idCuenta]
+            );
 
-        if (checkDuplicado.rows.length > 0) {
-            await client.query('ROLLBACK');
-            // Devolvemos error controlado
-            return res.status(400).json({ success: false, message: '¡Ya tienes guardado este ítem!' });
+            if (checkSalonComprometido.rows.length > 0) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'No puedes reservar otro salón. Ya tienes uno con pagos realizados.' 
+                });
+            }
         }
-        // --------------------------------
+        // ---------------------------------------------------------
 
-        let fechaLimite = null;
-        if (regla_pago_meses) {
-            fechaLimite = new Date();
-            fechaLimite.setMonth(fechaLimite.getMonth() + parseInt(regla_pago_meses));
-        }
+        const check = await client.query('SELECT id_reserva FROM Reserva WHERE fk_cuentapareja_id=$1 AND fk_opcion_id=$2 AND tipo_opcion=$3 AND estado_pago!=\'Cancelado\'', [idCuenta, id_opcion, tipo_opcion]);
+        if(check.rows.length > 0) { await client.query('ROLLBACK'); return res.status(400).json({ message: 'Ya guardado.' }); }
 
-        const query = `
-            INSERT INTO Reserva (fk_cuentapareja_id, fk_opcion_id, tipo_opcion, cantidad, monto_total, estado_pago, fecha_limite_pago)
-            VALUES ($1, $2, $3, 1, $4, 'Pendiente', $5)
-            RETURNING id_reserva`;
+        let fl = null; if(regla_pago_meses) { fl = new Date(); fl.setMonth(fl.getMonth() + parseInt(regla_pago_meses)); }
         
-        await client.query(query, [idCuentaPareja, id_opcion, tipo_opcion, monto_total, fechaLimite]);
-        await client.query('COMMIT');
-        res.status(201).json({ success: true, message: '¡Guardado!' });
+        await client.query('INSERT INTO Reserva (fk_cuentapareja_id, fk_opcion_id, tipo_opcion, monto_total, estado_pago, fecha_limite_pago) VALUES ($1, $2, $3, $4, \'Pendiente\', $5)', [idCuenta, id_opcion, tipo_opcion, monto_total, fl]);
+        
+        await client.query('COMMIT'); 
+        res.json({ success: true, message: '¡Guardado!' });
 
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error(error);
-        res.status(500).json({ success: false, message: 'Error al guardar.' });
-    } finally {
-        client.release();
-    }
+    } catch (e) { 
+        await client.query('ROLLBACK'); 
+        console.error(e); 
+        res.status(500).json({ message: 'Error' }); 
+    } finally { client.release(); }
 });
 
 // ==================================================================
@@ -742,82 +739,62 @@ app.post('/admin/login', async (req, res) => {
 // ==================================================================
 // 9. RUTA PARA PAGAR (CON REGLA DE EXCLUSIVIDAD DE SALONES)
 // ==================================================================
+// 7. RUTA PAGAR RESERVA (CORREGIDA: PROTEGE ABONOS)
 app.post('/pagar-reserva', async (req, res) => {
-    // Recibimos más datos ahora
-    const { id_reserva, monto_pagado, metodo_pago, tipo_pago_elegido } = req.body; 
-    // tipo_pago_elegido puede ser 'Total' o 'Parcial'
-
-    if (!id_reserva || !monto_pagado) {
-        return res.status(400).json({ success: false, message: 'Datos incompletos' });
-    }
-
+    const { id_reserva, monto_pagado, metodo_pago, tipo_pago_elegido } = req.body;
+    
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
-
-        // 1. Obtener información de la reserva actual
-        const resInfo = await client.query(
-            'SELECT fk_cuentapareja_id, tipo_opcion, monto_total, monto_pagado_acumulado FROM Reserva WHERE id_reserva = $1', 
-            [id_reserva]
-        );
         
-        if (resInfo.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return res.status(404).json({ success: false, message: 'Reserva no encontrada' });
+        const resData = await client.query('SELECT fk_cuentapareja_id, tipo_opcion, monto_total, monto_pagado_acumulado FROM Reserva WHERE id_reserva = $1', [id_reserva]);
+        const r = resData.rows[0];
+        
+        // --- NUEVA VALIDACIÓN ---
+        // Si intentas pagar un salón, verificar que no haya OTRO salón ya pagado/abonado
+        if (r.tipo_opcion === 'Salon') {
+            const conflicto = await client.query(
+                `SELECT id_reserva FROM Reserva 
+                 WHERE fk_cuentapareja_id = $1 
+                 AND tipo_opcion = 'Salon' 
+                 AND id_reserva != $2 
+                 AND estado_pago IN ('Abonado', 'Pagado Total')`,
+                [r.fk_cuentapareja_id, id_reserva]
+            );
+            
+            if (conflicto.rows.length > 0) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ success: false, message: 'Error: Ya tienes otro salón con pagos activos.' });
+            }
         }
+        // ------------------------
 
-        const reserva = resInfo.rows[0];
-        const idCuenta = reserva.fk_cuentapareja_id;
-        const tipoServicio = reserva.tipo_opcion;
+        const nuevoAcum = parseFloat(r.monto_pagado_acumulado || 0) + parseFloat(monto_pagado);
+        let estado = (tipo_pago_elegido === 'Total' || nuevoAcum >= parseFloat(r.monto_total)) ? 'Pagado Total' : 'Abonado';
 
-        // 2. Calcular nuevo estado
-        const nuevoAcumulado = parseFloat(reserva.monto_pagado_acumulado || 0) + parseFloat(monto_pagado);
-        let nuevoEstado = 'Abonado'; // Por defecto
+        await client.query('INSERT INTO Factura (fk_reserva_id, monto_pagado, metodo_pago, estado_pago) VALUES ($1, $2, $3, \'Aprobado\')', [id_reserva, monto_pagado, metodo_pago]);
+        await client.query('UPDATE Reserva SET estado_pago = $1, monto_pagado_acumulado = $2 WHERE id_reserva = $3', [estado, nuevoAcum, id_reserva]);
 
-        // Si paga todo o si la suma ya cubre el total
-        if (tipo_pago_elegido === 'Total' || nuevoAcumulado >= parseFloat(reserva.monto_total)) {
-            nuevoEstado = 'Pagado Total';
-        }
-
-        // 3. Insertar Factura
-        await client.query(
-            `INSERT INTO Factura (fk_reserva_id, monto_pagado, metodo_pago, estado_pago)
-             VALUES ($1, $2, $3, 'Aprobado')`,
-            [id_reserva, monto_pagado, metodo_pago]
-        );
-
-        // 4. Actualizar Reserva
-        await client.query(
-            `UPDATE Reserva 
-             SET estado_pago = $1, 
-                 monto_pagado_acumulado = $2 
-             WHERE id_reserva = $3`,
-            [nuevoEstado, nuevoAcumulado, id_reserva]
-        );
-
-        // 5. REGLA DE ORO: SI PAGÓ UN SALÓN, ELIMINAR LOS OTROS SALONES RESERVADOS
-        // (Solo si es un Salón y es el primer pago que confirma el compromiso)
-        if (tipoServicio === 'Salon') {
-            console.log(`Usuario pagó Salón ${id_reserva}. Eliminando competencias...`);
+        // REGLA DE ORO CORREGIDA: 
+        // Solo borrar los otros salones si están PENDIENTES (solo 'Me gusta')
+        if(r.tipo_opcion === 'Salon') {
             await client.query(
                 `DELETE FROM Reserva 
                  WHERE fk_cuentapareja_id = $1 
                  AND tipo_opcion = 'Salon' 
-                 AND id_reserva != $2`, // Borra todos MENOS el que acabo de pagar
-                [idCuenta, id_reserva]
+                 AND id_reserva != $2
+                 AND estado_pago = 'Pendiente'`, // <--- ESTO ES CLAVE: Solo borra los que no tienen dinero
+                [r.fk_cuentapareja_id, id_reserva]
             );
         }
+        
+        await client.query('COMMIT'); 
+        res.json({ success: true });
 
-        await client.query('COMMIT');
-        res.json({ success: true, message: 'Pago exitoso. ¡Reserva confirmada!' });
-
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Error al pagar:', error);
-        res.status(500).json({ success: false, message: 'Error en el servidor' });
-    } finally {
-        client.release();
-    }
+    } catch (e) { 
+        await client.query('ROLLBACK'); 
+        res.status(500).json({ message: 'Error' }); 
+    } finally { client.release(); }
 });
 // ==================================================================
 // 10. RUTA ADMIN: AGREGAR PRODUCTO (VERSIÓN TEXTO SIMPLE)

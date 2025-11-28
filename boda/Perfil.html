@@ -69,27 +69,26 @@
         .delete-btn { position: absolute; top: 10px; right: 10px; background: rgba(231, 76, 60, 0.9); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: none; font-weight: bold; justify-content: center; align-items: center; }
         .gallery-item:hover .delete-btn { display: flex; }
 
-        /* --- MODAL CORREGIDO (SCROLL UNIFICADO) --- */
+        /* --- MODAL PRO (SCROLL UNIFICADO) --- */
         .modal {
             display: none; position: fixed; z-index: 3000; left: 0; top: 0;
             width: 100%; height: 100%; background-color: rgba(0,0,0,0.85);
-            backdrop-filter: blur(5px); justify-content: center; align-items: flex-start; /* Alineado arriba para permitir scroll */
-            padding: 20px; box-sizing: border-box; overflow-y: auto; /* Scroll en el fondo oscuro si es necesario */
+            backdrop-filter: blur(5px); justify-content: center; align-items: flex-start;
+            padding: 20px; box-sizing: border-box; overflow-y: auto; 
         }
 
         .modal-content-pro {
             background-color: white; border-radius: 15px; width: 100%; max-width: 850px;
             display: flex; flex-direction: row;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5); position: relative;
-            margin-top: 5vh; margin-bottom: 5vh; /* Margen vertical */
-            /* Eliminamos max-height y overflow:hidden para que crezca naturalmente */
+            margin-top: 5vh; margin-bottom: 5vh;
         }
 
         .modal-left { 
             width: 40%; background: #f9f9f9; display: flex; flex-direction: column; 
             border-right: 1px solid #eee; 
         }
-        .modal-left img { width: 100%; height: 250px; object-fit: cover; }
+        .modal-left img { width: 100%; height: 250px; object-fit: cover; flex-shrink: 0; }
         .modal-desc-box { padding: 20px; color: #555; font-size: 0.95em; line-height: 1.6; }
 
         .modal-right { width: 60%; padding: 30px; display: flex; flex-direction: column; }
@@ -99,23 +98,12 @@
         .qr-section { display: none; background: #fff; padding: 15px; border: 2px dashed #3498db; text-align: center; margin-top: 10px; }
         .qr-img { width: 120px; height: 120px; margin: 0 auto; display: block; }
 
-        /* RESPONSIVIDAD MODAL */
         @media (max-width: 768px) {
             .profile-header { flex-direction: column; gap: 15px; text-align: center; }
-            
-            .modal-content-pro { flex-direction: column; } /* Se apila */
-            
-            .modal-left { 
-                width: 100%; border-right: none; border-bottom: 1px solid #eee; 
-                height: auto; 
-            }
-            .modal-left img { height: 200px; }
-            
-            .modal-right { 
-                width: 100%; height: auto; padding: 20px;
-                box-sizing: border-box;
-            }
-            
+            .modal-content-pro { flex-direction: column; }
+            .modal-left { width: 100%; border-right: none; border-bottom: 1px solid #eee; height: auto; }
+            .modal-left img { height: 180px; }
+            .modal-right { width: 100%; height: auto; padding: 20px; box-sizing: border-box; }
             .tabs-container { flex-wrap: wrap; }
             .tab-btn { flex-grow: 1; text-align: center; padding: 8px; }
             .gallery-grid { grid-template-columns: 1fr 1fr; }
@@ -166,7 +154,9 @@
                 <img id="pagoImg" src="" alt="Producto" onerror="this.src='https://placehold.co/400x300?text=Sin+Imagen'">
                 <div class="modal-desc-box">
                     <h3 id="pagoNombreItem" style="margin-top:0; color:#2c3e50;">Nombre</h3>
+                    
                     <div id="pagoDetalleHTML"></div> 
+                    
                     <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ddd;">
                     <p style="margin:0;">Precio Total:<br><strong id="pagoPrecioTotal" style="color:#27ae60; font-size:1.4em;"></strong></p>
                 </div>
@@ -220,12 +210,17 @@
     </div>
 
 <script>
+    // --- VARIABLES GLOBALES ---
     let reservaActualId = null;
     let precioTotalItem = 0; 
     let montoAPagarAhora = 0;
     let esSaldoPendiente = false; 
     let esTipoSalon = false;
 
+    // Array global para guardar los datos limpios (ESTO ARREGLA EL BUG)
+    let globalItems = []; 
+
+    // --- SEGURIDAD ---
     window.addEventListener('pageshow', function(event) {
         if (!localStorage.getItem('usuarioId')) window.location.replace('Login.html');
     });
@@ -237,6 +232,7 @@
         btn.classList.add('active');
     }
 
+    // --- CARGA INICIAL ---
     window.addEventListener('DOMContentLoaded', async () => {
         const idUsuario = localStorage.getItem('usuarioId');
         if(!idUsuario) { window.location.href = 'Login.html'; return; }
@@ -251,7 +247,7 @@
                 window.listaNotificaciones = dataNot.notificaciones;
             }
 
-            // Perfil
+            // Perfil Completo
             const response = await fetch(`http://localhost:3000/perfil-completo/${idUsuario}`);
             const data = await response.json();
 
@@ -262,6 +258,9 @@
                 const infoP = document.getElementById('infoPareja');
                 data.pareja ? infoP.innerHTML = `Pareja con <span class="partner-name">${data.pareja}</span>` : infoP.textContent = "Comparte tu código.";
 
+                // Guardamos los datos en global para usarlos al abrir el modal
+                globalItems = data.items; 
+
                 const grids = {
                     'Salon': document.getElementById('gridSalon'),
                     'Decoracion': document.getElementById('gridDecor'),
@@ -271,8 +270,9 @@
                 };
                 Object.values(grids).forEach(g => g.innerHTML = '');
 
-                data.items.forEach(item => {
-                    const div = crearHTMLItem(item);
+                // Generar tarjetas (Pasamos el índice, no el objeto)
+                data.items.forEach((item, index) => {
+                    const div = crearHTMLItem(item, index);
                     if (grids[item.tipo_opcion]) grids[item.tipo_opcion].appendChild(div);
                     else if(grids['Catering']) grids['Catering'].appendChild(div);
                 });
@@ -292,7 +292,9 @@
         alert(mensaje);
     }
 
-    function crearHTMLItem(item) {
+    // --- CREAR TARJETA (SOLUCIÓN DEL BUG) ---
+    // Recibimos el índice del array global
+    function crearHTMLItem(item, index) {
         const div = document.createElement('div');
         div.className = 'gallery-item';
         
@@ -302,22 +304,12 @@
         const precioFormato = total.toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
         const restanteFormato = restante.toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
 
-        const nombreSafe = (item.nombre_item || 'Item').replace(/'/g, "\\'");
-        const imgSafe = (item.url_imagen || '').replace(/'/g, "\\'");
-        
-        let infoHTML = "";
-        if (item.tipo_opcion === 'Salon') {
-            infoHTML = `
-                <p>📍 <strong>Ubicación:</strong> ${item.departamento || 'N/A'}</p>
-                <p>👥 <strong>Capacidad:</strong> ${item.capacidad || '?'} personas</p>
-                <p>🪑 <strong>Mesas:</strong> ${item.incluye_mesas ? '✔ Sí' : '✘ No'}</p>
-                <p>🍽️ <strong>Cubiertos:</strong> ${item.incluye_cubiertos ? '✔ Sí' : '✘ No'}</p>
-            `;
-        } else {
-            infoHTML = `<p>${item.descripcion || 'Sin descripción detallada.'}</p>`;
-        }
-        const infoSafe = infoHTML.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '');
+        // Detalles visuales para la tarjeta
+        let detallesVisuales = '';
+        if (item.departamento) detallesVisuales += `<p style="margin: 2px 0; font-size: 0.9em; color:#555;">📍 ${item.departamento}</p>`;
+        if (item.tipo_opcion === 'Salon' && item.capacidad) detallesVisuales += `<p style="margin: 2px 0; font-size: 0.9em; color:#555;">👥 Cap: ${item.capacidad}</p>`;
 
+        // Lógica de Botones
         let btnHTML = '', estadoHTML = '', botonEliminarHTML = '';
 
         if (item.estado_pago === 'Pagado Total' || restante <= 0) {
@@ -325,19 +317,17 @@
             estadoHTML = `<small style="color:green">Pagado</small>`;
         } 
         else if (item.estado_pago === 'Abonado' || (pagado > 0 && pagado < total)) {
-            btnHTML = `<button class="pay-btn" style="background-color:#f39c12;" onclick="abrirModalPago(${item.id_reserva}, '${item.tipo_opcion}', '${nombreSafe}', ${total}, ${restante}, '${imgSafe}', '${infoSafe}', true)">💳 Pagar Restante (${restanteFormato})</button>`;
+            // PASAMOS SOLO EL ÍNDICE Y UN FLAG DE "ES SALDO"
+            btnHTML = `<button class="pay-btn" style="background-color:#f39c12;" onclick="abrirModalPago(${index}, true)">💳 Pagar Restante (${restanteFormato})</button>`;
             estadoHTML = `<small style="color:#e67e22; font-weight:bold;">⚠ Pendiente: Bs ${restante}</small>`;
             botonEliminarHTML = `<button class="delete-btn" style="background:#ccc; cursor:not-allowed;" title="Pagos realizados" onclick="event.stopPropagation(); alert('No puedes eliminar con pagos.');">🔒</button>`;
         } 
         else {
-            btnHTML = `<button class="pay-btn" onclick="abrirModalPago(${item.id_reserva}, '${item.tipo_opcion}', '${nombreSafe}', ${total}, ${total}, '${imgSafe}', '${infoSafe}', false)">💳 Pagar</button>`;
+            // PASAMOS SOLO EL ÍNDICE Y FLAG DE "NO ES SALDO"
+            btnHTML = `<button class="pay-btn" onclick="abrirModalPago(${index}, false)">💳 Pagar</button>`;
             estadoHTML = `<small style="color:#e74c3c">Sin pagar</small>`;
             botonEliminarHTML = `<button class="delete-btn" onclick="eliminarReserva(${item.id_reserva})">X</button>`;
         }
-
-        let detallesVisuales = '';
-        if (item.departamento) detallesVisuales += `<p style="margin: 2px 0; font-size: 0.9em; color:#555;">📍 ${item.departamento}</p>`;
-        if (item.tipo_opcion === 'Salon' && item.capacidad) detallesVisuales += `<p style="margin: 2px 0; font-size: 0.9em; color:#555;">👥 Cap: ${item.capacidad}</p>`;
 
         div.innerHTML = `
             <img src="${item.url_imagen}" onerror="this.src='https://placehold.co/400x300?text=Sin+Imagen'">
@@ -353,17 +343,41 @@
         return div;
     }
 
-    function abrirModalPago(id, tipo, nombre, precioTotal, montoPendiente, imgUrl, infoHTML, isSaldo) {
-        reservaActualId = id;
-        precioTotalItem = parseFloat(precioTotal);
+    // --- ABRIR MODAL (Usando el índice global) ---
+    function abrirModalPago(index, isSaldo) {
+        // Recuperamos el objeto limpio desde el array global
+        const item = globalItems[index];
+        
+        reservaActualId = item.id_reserva;
+        const precioTotal = parseFloat(item.monto_total);
+        precioTotalItem = precioTotal;
         esSaldoPendiente = isSaldo;
-        esTipoSalon = (tipo === 'Salon');
+        esTipoSalon = (item.tipo_opcion === 'Salon');
+        const pagado = parseFloat(item.monto_pagado_acumulado || 0);
+        const montoPendiente = precioTotal - pagado;
 
-        document.getElementById('pagoImg').src = imgUrl;
-        document.getElementById('pagoNombreItem').textContent = nombre;
+        // 1. Llenar Imagen y Datos
+        document.getElementById('pagoImg').src = item.url_imagen;
+        document.getElementById('pagoImg').onerror = function() { this.src = 'https://placehold.co/400x300?text=Sin+Imagen'; };
+        
+        document.getElementById('pagoNombreItem').textContent = item.nombre_item;
+        document.getElementById('pagoPrecioTotal').textContent = precioTotal.toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
+
+        // 2. Generar HTML de Detalles (Limpio)
+        let infoHTML = "";
+        if (item.tipo_opcion === 'Salon') {
+            infoHTML = `
+                <p>📍 <strong>Ubicación:</strong> ${item.departamento || 'N/A'}</p>
+                <p>👥 <strong>Capacidad:</strong> ${item.capacidad || '?'} personas</p>
+                <p>🪑 <strong>Mesas:</strong> ${item.incluye_mesas ? '✔ Sí' : '✘ No'}</p>
+                <p>🍽️ <strong>Cubiertos:</strong> ${item.incluye_cubiertos ? '✔ Sí' : '✘ No'}</p>
+            `;
+        } else {
+            infoHTML = `<p>${item.descripcion || 'Sin descripción detallada.'}</p>`;
+        }
         document.getElementById('pagoDetalleHTML').innerHTML = infoHTML;
-        document.getElementById('pagoPrecioTotal').textContent = precioTotalItem.toLocaleString('es-ES', { style: 'currency', currency: 'BOB' });
 
+        // 3. Configurar Opciones
         const opcionParcial = document.getElementById('opcionParcial');
         const labelTotal = document.getElementById('labelTotal');
         const radioTotal = document.getElementById('pagoTotal');
@@ -373,7 +387,7 @@
         opcionParcial.style.display = 'none';
 
         if (esSaldoPendiente) {
-            labelTotal.textContent = `Pagar Saldo Restante (${montoPendiente} Bs)`;
+            labelTotal.textContent = `Pagar Saldo Restante (${montoPendiente.toLocaleString('es-ES', { style: 'currency', currency: 'BOB' })})`;
             radioTotal.disabled = true;
             montoAPagarAhora = montoPendiente;
         } 
@@ -453,7 +467,11 @@
         } catch(e){console.error(e);}
     }
     
-    function cerrarSesion() { localStorage.clear(); localStorage.removeItem('usuarioId'); window.location.replace('Login.html'); }
+    function cerrarSesion() {
+        localStorage.clear(); 
+        localStorage.removeItem('usuarioId');
+        window.location.replace('Login.html');
+    }
 </script>
 </body>
 </html>
